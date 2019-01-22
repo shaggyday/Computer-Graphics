@@ -38,6 +38,7 @@ all #includes in one section near the top of the file. */
 #define mainTEXR 0
 #define mainTEXG 1
 #define mainTEXB 2
+#define mainUNIFMODELING 0
 
 void colorPixel(int unifDim, const double unif[], int texNum, 
 		const texTexture *tex[], int varyDim, const double vary[], 
@@ -51,11 +52,11 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 
 void transformVertex(int unifDim, const double unif[], int attrDim, 
 		const double attr[], int varyDim, double vary[]) {
-	double rot[2][2];
-	mat22Rotation(unif[mainUNIFROT], rot);
-	mat221Multiply(rot, attr, vary);
-	vary[mainVARYX] += unif[mainUNIFTRANSL0];
-	vary[mainVARYY] += unif[mainUNIFTRANSL1];
+	double attrHomog[3] = {vary[0],vary[1],1};
+	double varyHomog[3];
+	mat331Multiply((double(*)[3])(&unif[mainUNIFMODELING]), attrHomog, varyHomog);
+	vary[mainVARYX] = varyHomog[0];
+	vary[mainVARYY] = varyHomog[1];
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
 }
@@ -65,7 +66,7 @@ texTexture texture;
 const texTexture *textures[1] = {&texture};
 const texTexture **tex = textures;
 meshMesh mesh;
-double unif[3 + 3] = {1.0, 1.0, 1.0, -128.0, -128.0, 0.0};
+double unif[3 + 3] = {1.0, 1.0, 1.0, -128.0, -128.0, 0.0,0,0,0,0,0,0};
 
 void draw(void) {
 	pixClearRGB(0.0, 0.0, 0.0);
@@ -86,9 +87,13 @@ void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 void handleTimeStep(double oldTime, double newTime) {
 	if (floor(newTime) - floor(oldTime) >= 1.0)
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
+	vecCopy(9, (double *)isom, &unif[mainUNIFMODELING]);
 	unif[mainUNIFR] = sin(newTime);
 	unif[mainUNIFG] = cos(oldTime);
 	unif[mainUNIFROT] += (newTime - oldTime);
+	double isom[3][3];
+	double translationVector[2] = {unif[mainUNIFTRANSL0],unif[mainUNIFTRANSL1]};
+	mat33Isometry(unif[mainUNIFROT], translationVector, isom);
 	draw();
 }
 
@@ -104,7 +109,7 @@ int main(void) {
 		texSetFiltering(&texture, texNEAREST);
 		texSetLeftRight(&texture, texREPEAT);
 		texSetTopBottom(&texture, texREPEAT);
-		sha.unifDim = 3 + 3;
+		sha.unifDim = 3 + 9;
 		sha.attrDim = 2 + 2;
 		sha.varyDim = 2 + 2;
 		sha.texNum = 1;
