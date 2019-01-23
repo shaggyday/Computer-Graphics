@@ -89,12 +89,17 @@ coordinates of the vertices, respectively (used in rasterization, and to
 interpolate the other elements of a, b, c). */
 void triRender(const shaShading *sha, const double unif[], 
 		const texTexture *tex[], const double a[], const double b[], 
-		const double c[],int i){
+		const double c[]){
+//    vecPrint(sha->varyDim,a);
+//    vecPrint(sha->varyDim,b);
+//    vecPrint(sha->varyDim,c);
+//    printf("wtf\n");
     //Rasterize
     double points[sha->varyDim*3];
     rasterize(sha->varyDim,points,a,b,c);
     double aPrime[sha->varyDim],bPrime[sha->varyDim],cPrime[sha->varyDim];
     distributeArray(sha->varyDim,points,aPrime,bPrime,cPrime);
+
 
     //Deal with slopes
     double slopeLeftRight = calSlope(aPrime,bPrime);
@@ -106,7 +111,6 @@ void triRender(const shaShading *sha, const double unif[],
     double MInv[2][2];
     if(prepareInterpolate(sha->varyDim,MInv,aPrime,bPrime,cPrime,bMinusA,cMinusA)!=0){
         printf("something went wrong\n");
-        return;
     }
 
     //Actually looping and interpolating 

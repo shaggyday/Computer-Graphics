@@ -13,6 +13,16 @@ void mat22Print(const double m[2][2]) {
 	}
 }
 
+void mat33Print(const double m[3][3]) {
+	int i, j;
+	for (i = 0; i < 3; i += 1) {
+		for (j = 0; j < 3; j += 1){
+			printf("%f    \n", m[i][j]);
+		}
+		printf("\n");
+	}
+}
+
 /* Returns the determinant of the matrix m. If the determinant is 0.0, then the 
 matrix is not invertible, and mInv is untouched. If the determinant is not 0.0, 
 then the matrix is invertible, and its inverse is placed into mInv. The output 
@@ -61,9 +71,6 @@ void mat333Multiply(const double m[3][3], const double n[3][3],
 		double mTimesN[3][3]){
 	int i,j;
 	for (i = 0;i < 3;i = i + 1)
-		//mTimesN[i][0] = m[i][0]*n[0][0] + m[i][1]*n[1][0] + m[i][2]*n[2][0];
-		//mTimesN[i][1] = m[i][0]*n[0][1] + m[i][1]*n[1][1] + m[i][2]*n[2][1];
-		//mTimesN[i][2] = m[i][0]*n[0][2] + m[i][1]*n[1][2] + m[i][2]*n[2][2];
 		for(j = 0;j < 3;j = j + 1){
 			mTimesN[i][j] = m[i][0]*n[0][j] + m[i][1]*n[1][j] + m[i][2]*n[2][j];
 		}
@@ -75,20 +82,20 @@ void mat331Multiply(const double m[3][3], const double v[3],
 		double mTimesV[3]){
 	int i;
 	for (i = 0;i < 3;i = i + 1)
-		mTimeV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2];
+		mTimesV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2];
 }
 
 /* Builds a 3x3 matrix representing 2D rotation and translation in homogeneous 
 coordinates. More precisely, the transformation first rotates through the angle 
 theta (in radians, counterclockwise), and then translates by the vector t. */
 void mat33Isometry(double theta, const double t[2], double isom[3][3]){
-	const double M[3][3] = {
-		{cos(theta),-sin(theta),0},
-		{sin(theta),cos(theta),0},
-		{0,0,1}};
-	const double T[3][3] = {
-		{1,0,t[0]},
-		{0,1,t[1]},
-		{0,0,1}};
-	mat333Multiply(M,T,isom);
+	isom[0][0] = cos(theta);
+	isom[0][1] = -sin(theta);
+	isom[0][2] = t[0];
+	isom[1][0] = sin(theta);
+	isom[1][1] = cos(theta);
+	isom[1][2] = t[1];
+	isom[2][0] = 0;
+	isom[2][1] = 0;
+	isom[2][2] = 1;
 }
