@@ -147,10 +147,17 @@ void mat33AngleAxisRotation(double theta, const double axis[3],
 	double sinTheta = sin(theta);
 	double cosTheta = 1-cos(theta);
 	mat333Multiply(U,U,U2);
-	mat33Scale(U,sinTheta,UPrime);
-	mat33Scale(U2,cosTheta,U2Prime);
+//	mat33Scale(U,sinTheta,UPrime);
+//	mat33Scale(U2,cosTheta,U2Prime);
+//	mat33Add(I3,UPrime,U2Prime,rot);
 	double I3[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
-	mat33Add(I3,UPrime,U2Prime,rot);
+	for (int i = 0;i < 3;i = i + 1)
+		for (int j = 0; j < 3; j = j + 1){
+			U[i][j] *= sinTheta;
+			U2[i][j] *= cosTheta;
+			rot[i][j] = I3[i][j] + U[i][j] + U2[i][j];
+		}
+
 }
 
 /* Given two length-1 3D vectors u, v that are perpendicular to each other.
@@ -171,9 +178,8 @@ void mat33BasisRotation(const double u[3], const double v[3],
 alias the input. */
 void mat444Multiply(const double m[4][4], const double n[4][4],
 					double mTimesN[4][4]){
-    int i,j;
-    for (i = 0;i < 4;i = i + 1)
-        for(j = 0;j < 4;j = j + 1){
+    for (int i = 0;i < 4;i = i + 1)
+        for(int j = 0;j < 4;j = j + 1){
             mTimesN[i][j] = m[i][0]*n[0][j] + m[i][1]*n[1][j] + m[i][2]*n[2][j] + m[i][3]*n[3][j];
         }
 }
@@ -182,21 +188,30 @@ void mat444Multiply(const double m[4][4], const double n[4][4],
 alias the input. */
 void mat441Multiply(const double m[4][4], const double v[4],
 					double mTimesV[4]){
-    int i;
-    for (i = 0;i < 4;i = i + 1)
-        mTimesV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2] + m[i][3]*v[3];
+    for (int i = 0;i < 4;i = i + 1)
+//        mTimesV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2] + m[i][3]*v[3];
+		for (int j = 0;j < 4;j = i + 1)
+    		mTimesV[i] += m[i][j] + v[j];
 }
 
 /* Given a rotation and a translation, forms the 4x4 homogeneous matrix
 representing the rotation followed in time by the translation. */
 void mat44Isometry(const double rot[3][3], const double trans[3],
 				   double isom[4][4]){
-    int i,j;
-    for (i = 0;i < 3;i = i + 1) {
-        for (j = 0; j < 3; j = j + 1)
+//    for (int i = 0;i < 3;i = i + 1) {
+//        for (int j = 0; j < 3; j = j + 1)
+//            isom[i][j] = rot[i][j];
+//        isom[i][3] = trans[i];
+//        isom[3][i] = 0;
+//    }
+//    isom[3][3] = 1;
+    for (int i = 0;i < 3;i = i + 1) {
+        for (int j = 0; j < 3; j = j + 1)
             isom[i][j] = rot[i][j];
         isom[i][3] = trans[i];
-        isom[3][i] = 0;
     }
+    isom[3][0] = 0;
+    isom[3][1] = 0;
+    isom[3][2] = 0;
     isom[3][3] = 1;
 }
