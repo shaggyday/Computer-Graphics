@@ -32,7 +32,7 @@ void distributeArray(int varyDim, double points[], double aPrime[],  double bPri
 /* Sort the three vertices in the correct order */
 void rasterize(int varyDim, double points[], const double a[], const double b[],const double c[]){
     if ((c[0]<=b[0] && b[0]<=a[0])||
-        (c[0]<=a[0] && a[0]<=b[0])){
+        (c[0]<=a[0] && a[0]<=b[0] && a[0]!=c[0])){
         aggregateArray(varyDim,points,c,a,b);
     }
     else if((b[0]<=a[0] && a[0]<=c[0])||
@@ -45,7 +45,7 @@ void rasterize(int varyDim, double points[], const double a[], const double b[],
 }
 
 double calSlope(double a[],  double b[]){
-    if (a[0] == b[0]){
+    if (a[0] == b[0] || a[1] == b[1]){
         return 0;
     }
     else{
@@ -60,9 +60,9 @@ double bMinusA[],double cMinusA[]){
         {bPrime[0]-aPrime[0],cPrime[0]-aPrime[0]},
         {bPrime[1]-aPrime[1],cPrime[1]-aPrime[1]}};
     double detM = mat22Invert(M,MInv);
-    if(detM <= 0){
+    printf("%f\n",detM);
+    if(detM <= 0)
         return 1;
-    }
     vecSubtract(varyDim,bPrime,aPrime,bMinusA);
     vecSubtract(varyDim,cPrime,aPrime,cMinusA);
     return 0;
@@ -90,10 +90,6 @@ interpolate the other elements of a, b, c). */
 void triRender(const shaShading *sha, const double unif[], 
 		const texTexture *tex[], const double a[], const double b[], 
 		const double c[]){
-//    vecPrint(sha->varyDim,a);
-//    vecPrint(sha->varyDim,b);
-//    vecPrint(sha->varyDim,c);
-//    printf("wtf\n");
     //Rasterize
     double points[sha->varyDim*3];
     rasterize(sha->varyDim,points,a,b,c);

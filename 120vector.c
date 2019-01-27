@@ -60,7 +60,8 @@ void vecScale(int dim, double c, const double w[], double cTimesW[]) {
 /* Returns the dot product of the vectors v and w. */
 double vecDot(int dim, const double v[], const double w[]){
 	double dot;
-	for(int i = 0;i < dim;i += 1)
+	int i;
+	for(i = 0;i < dim;i = i + 1)
 		dot += v[i]*w[i];
 	return dot;
 }
@@ -68,7 +69,8 @@ double vecDot(int dim, const double v[], const double w[]){
 /* Returns the length of the vector v. */
 double vecLength(int dim, const double v[]){
 	double length;
-	for(int i = 0;i < dim;i += 1)
+	int i;
+	for(i = 0;i < dim;i = i + 1)
 		length += v[i]*v[i];
 	return sqrt(length);
 }
@@ -98,7 +100,7 @@ void vec3Spherical(double rho, double phi, double theta, double v[3]){
 	double sinPhi = sin(phi);
 	v[0] = rho*sinPhi*cos(theta);
 	v[1] = rho*sinPhi*sin(theta);
-	v[2] = rho*cos(theta);
+	v[2] = rho*cos(phi);
 }
 
 

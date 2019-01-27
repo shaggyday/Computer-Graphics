@@ -639,14 +639,14 @@ void meshRender(const meshMesh *mesh, const shaShading *sha,
 			a = meshGetVertexPointer(mesh,triangle[0]);
 			b = meshGetVertexPointer(mesh,triangle[1]);
 			c = meshGetVertexPointer(mesh,triangle[2]);
-			sha->transformVertex(sha->unifDim,unif,sha->attrDim,a,sha->varyDim,varyA);
-			sha->transformVertex(sha->unifDim,unif,sha->attrDim,b,sha->varyDim,varyB);
-			sha->transformVertex(sha->unifDim,unif,sha->attrDim,c,sha->varyDim,varyC);
+//			sha->transformVertex(sha->unifDim,unif,sha->attrDim,a,sha->varyDim,varyA);
+//			sha->transformVertex(sha->unifDim,unif,sha->attrDim,b,sha->varyDim,varyB);
+//			sha->transformVertex(sha->unifDim,unif,sha->attrDim,c,sha->varyDim,varyC);
 //			vecPrint(sha->unifDim,unif);
-//            vecPrint(sha->varyDim,varyA);
-//            vecPrint(sha->varyDim,varyB);
-//            vecPrint(sha->varyDim,varyC);
-			triRender(sha,unif,tex,varyA,varyB,varyC);
+            vecPrint(sha->varyDim,a);
+            vecPrint(sha->varyDim,b);
+            vecPrint(sha->varyDim,c);
+			triRender(sha,unif,tex,a,b,c);
 		}
 	}
 }
