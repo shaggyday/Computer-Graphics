@@ -54,7 +54,11 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 void transformVertex(int unifDim, const double unif[], int attrDim, 
 		const double attr[], int varyDim, double vary[]) {
 	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
+//	vecPrint(attrDim,attr);
+//	fflush(stdout);
 	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
+//	vecPrint(varyDim,vary);
+//	fflush(stdout);
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
 }
@@ -64,7 +68,8 @@ texTexture texture;
 depthBuffer depth;
 const texTexture *textures[1] = {&texture};
 const texTexture **tex = textures;
-meshMesh mesh;
+meshMesh mesh1;
+meshMesh mesh2;
 double unif[3 + 16] = {1.0, 1.0, 1.0, 
 	1.0, 0.0, 0.0, 0.0, 
 	0.0, 1.0, 0.0, 0.0, 
@@ -77,7 +82,8 @@ double translationVector[3] = {256.0, 256.0, 256.0};
 void draw(void) {
 	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&depth,1000000000000);
-	meshRender(&mesh, &depth, &sha, unif, tex);
+	meshRender(&mesh1, &depth, &sha, unif, tex);
+	meshRender(&mesh2, &depth, &sha, unif, tex);
 }
 
 void handleKeyUp(int key, int shiftIsDown, int controlIsDown, 
@@ -110,18 +116,14 @@ int main(void) {
 		return 1;
 	else if (texInitializeFile(&texture, "../Noether_retusche_nachcoloriert.jpg") != 0)
 		return 2;
-	else if (meshInitializeBox(&mesh, -128.0, 128.0, -64.0, 64.0, -32.0, 32.0) != 0)
+	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -32.0, 32.0) != 0)
 	//else if (meshInitializeSphere(&mesh, 64.0, 16, 32) != 0)
 		return 3;
-	else if(depthInitialize(&depth,256,128)!=0)
+	else if (meshInitializeSphere(&mesh2, 64.0, 16, 32) != 0)
 		return 4;
+	else if(depthInitialize(&depth,256,128)!=0)
+		return 5;
 	else {
-		{
-			meshMesh meshB;
-			printf("meshSaveFile %d\n", meshSaveFile(&mesh, "first.txt"));
-			printf("meshInitializeFile %d\n", meshInitializeFile(&meshB, "first.txt"));
-			printf("meshSaveFile %d\n", meshSaveFile(&meshB, "second.txt"));
-		}
 		texSetFiltering(&texture, texNEAREST);
 		texSetLeftRight(&texture, texREPEAT);
 		texSetTopBottom(&texture, texREPEAT);
@@ -135,7 +137,8 @@ int main(void) {
 		pixSetKeyUpHandler(handleKeyUp);
 		pixSetTimeStepHandler(handleTimeStep);
 		pixRun();
-		meshDestroy(&mesh);
+		meshDestroy(&mesh1);
+		meshDestroy(&mesh2);
 		texDestroy(&texture);
 		depthDestroy(&depth);
 		return 0;

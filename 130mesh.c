@@ -643,9 +643,9 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf, const shaShading *sha,
 			sha->transformVertex(sha->unifDim,unif,sha->attrDim,b,sha->varyDim,varyB);
 			sha->transformVertex(sha->unifDim,unif,sha->attrDim,c,sha->varyDim,varyC);
 //			vecPrint(sha->unifDim,unif);
-//            vecPrint(sha->varyDim,varyA);
-//            vecPrint(sha->varyDim,varyB);
-//            vecPrint(sha->varyDim,varyC);
+            vecPrint(sha->varyDim,varyA);
+            vecPrint(sha->varyDim,varyB);
+            vecPrint(sha->varyDim,varyC);
 			triRender(sha,buf,unif,tex,varyA,varyB,varyC);
 		}
 	}
