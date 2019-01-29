@@ -42,16 +42,23 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 		const texTexture *tex[], int varyDim, const double vary[], 
 		double rgb[3]) {
 	double sample[tex[0]->texelDim];
+//	printf("11111\n");
+//	vecPrint(varyDim,vary);
+//	fflush(stdout);
 	texSample(tex[0], vary[mainVARYS], vary[mainVARYT], sample);
+//	printf("22222\n");
+//	fflush(stdout);
 	rgb[0] = sample[mainTEXR] * unif[mainUNIFR];
 	rgb[1] = sample[mainTEXG] * unif[mainUNIFG];
 	rgb[2] = sample[mainTEXB] * unif[mainUNIFB];
+//	printf("33333\n");
+//	fflush(stdout);
 }
 
 void transformVertex(int unifDim, const double unif[], int attrDim, 
 		const double attr[], int varyDim, double vary[]) {
 	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
-//	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
+	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
 }
@@ -109,12 +116,6 @@ int main(void) {
 	//else if (meshInitializeSphere(&mesh, 64.0, 16, 32) != 0)
 		return 3;
 	else {
-		{
-			meshMesh meshB;
-			printf("meshSaveFile %d\n", meshSaveFile(&mesh, "first.txt"));
-			printf("meshInitializeFile %d\n", meshInitializeFile(&meshB, "first.txt"));
-			printf("meshSaveFile %d\n", meshSaveFile(&meshB, "second.txt"));
-		}
 		texSetFiltering(&texture, texNEAREST);
 		texSetLeftRight(&texture, texREPEAT);
 		texSetTopBottom(&texture, texREPEAT);
