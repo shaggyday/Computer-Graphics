@@ -80,8 +80,8 @@ double rotationAxis[3];
 double translationVector[3] = {256.0, 256.0, 256.0};
 
 void draw(void) {
-	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&depth,1000000000000);
+	pixClearRGB(0.0, 0.0, 0.0);
 	meshRender(&mesh1, &depth, &sha, unif, tex);
 	meshRender(&mesh2, &depth, &sha, unif, tex);
 }
@@ -116,12 +116,12 @@ int main(void) {
 		return 1;
 	else if (texInitializeFile(&texture, "../Noether_retusche_nachcoloriert.jpg") != 0)
 		return 2;
-	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -32.0, 32.0) != 0)
+	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -64.0, -20) != 0)
 	//else if (meshInitializeSphere(&mesh, 64.0, 16, 32) != 0)
 		return 3;
 	else if (meshInitializeSphere(&mesh2, 64.0, 16, 32) != 0)
 		return 4;
-	else if(depthInitialize(&depth,256,128)!=0)
+	else if(depthInitialize(&depth,512,512)!=0)
 		return 5;
 	else {
 		texSetFiltering(&texture, texNEAREST);
