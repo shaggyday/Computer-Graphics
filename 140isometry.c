@@ -35,8 +35,9 @@ then untransform the result, then you recover the original point. Similarly, if
 you untransform a point and then transform the result, then you recover the 
 original point. The output CANNOT safely alias the input. */
 void isoUntransformPoint(isoIsometry *iso, const double isoP[3], double p[3]) {
-	vecSubtract(3,isoP, iso->translation, isoP);
-	mat331TransposeMultiply(iso->rotation, isoP, p);
+	double temp[3];
+	vecSubtract(3,isoP, iso->translation, temp);
+	mat331TransposeMultiply(iso->rotation, temp, p);
 }
 
 /* Applies the rotation to a vector. The output CANNOT safely alias the input. 
@@ -65,7 +66,7 @@ void isoGetInverseHomogeneous(const isoIsometry *iso, double homogInv[4][4]) {
 	double mInv[3][3];
 	mat331TransposeMultiply(iso->rotation,iso->translation,mTTimesV);
 	vecScale(3,-1,mTTimesV,transInv);
-	mat333TransposeMatrix(iso->rotation,mInv);
+	mat333TranposeMatrix(iso->rotation,mInv);
 	mat44Isometry(mInv,transInv,homogInv);
 }
 
