@@ -90,8 +90,7 @@ void mat333Multiply(const double m[3][3], const double n[3][3],
 alias the input. */
 void mat331Multiply(const double m[3][3], const double v[3], 
 		double mTimesV[3]){
-	int i;
-	for (i = 0;i < 3;i = i + 1)
+	for (int i = 0;i < 3;i = i + 1)
 		mTimesV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2];
 }
 
@@ -209,4 +208,20 @@ void mat44Isometry(const double rot[3][3], const double trans[3],
             isom[i][j] = rot[i][j];
     }
     isom[3][3] = 1;
+}
+
+/* Multiplies the transpose of the 3x3 matrix m by the 3x1 matrix v. To 
+clarify, in math notation it computes M^T v. The output CANNOT safely alias the 
+input. */
+void mat331TransposeMultiply(const double m[3][3], const double v[3], 
+		double mTTimesV[3]){
+	for (int i = 0;i < 3;i = i + 1)
+		mTTimesV[i] = m[0][i]*v[0] + m[1][i]*v[1] + m[2][i]*v[2];
+}
+
+/* Sets its argument to the 4x4 zero matrix (which consists entirely of 0s). */
+void mat44Zero(double m[4][4]){
+	for(int i = 0;i < 4;i += 1)
+		for(int j = 0;j < 4;j += 1)
+			m[i][j] = 0;
 }
