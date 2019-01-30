@@ -219,6 +219,12 @@ void mat331TransposeMultiply(const double m[3][3], const double v[3],
 		mTTimesV[i] = m[0][i]*v[0] + m[1][i]*v[1] + m[2][i]*v[2];
 }
 
+void mat333TranposeMatrix(const double m[3][3], double mInv[3][3]){
+    for (i = 0;i < 3;i = i + 1)
+        for(j = 0;j < 3;j = j + 1)
+        	mInv[i][j] = m[j][i];
+}
+
 /* Sets its argument to the 4x4 zero matrix (which consists entirely of 0s). */
 void mat44Zero(double m[4][4]){
 	for(int i = 0;i < 4;i += 1)
