@@ -15,10 +15,10 @@
 #include "140isometry.c"
 #include "140camera.c"
 #include "040texture.c"
-#include "130shading.c"
+#include "141shading.c"
 #include "130depth.c"
 #include "130triangle.c"
-#include "130mesh.c"
+#include "141mesh.c"
 
 #define mainATTRX 0
 #define mainATTRY 1
@@ -61,9 +61,9 @@ void transformVertex(isoIsometry *iso, int unifDim, const double unif[], int att
     isoTransformPoint(iso,attr,vary);
 //	double homog[4][4];
 //	isoGetHomogeneous(&iso,homog);
-	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
+//	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
 //	mat44Print((double(*)[4])(&unif[mainUNIFMODELING]));
-	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
+//	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
 
 //	isoGetInverseHomogeneous(&iso,homog);
 //    double temp[4] = {vary[0],vary[1],vary[2],1.0};
@@ -89,15 +89,7 @@ const texTexture *textures[1] = {&texture};
 const texTexture **tex = textures;
 meshMesh mesh1;
 meshMesh mesh2;
-double unif[3 + 32] = {1.0, 1.0, 1.0,
-					   1.0, 0.0, 0.0, 0.0,
-					   0.0, 1.0, 0.0, 0.0,
-					   0.0, 0.0, 1.0, 0.0,
-					   0.0, 0.0, 0.0, 1.0,
-					   1.0, 0.0, 0.0, 0.0,
-					   0.0, 1.0, 0.0, 0.0,
-					   0.0, 0.0, 1.0, 0.0,
-					   0.0, 0.0, 0.0, 1.0};
+double unif[3 + 32] = {1.0, 1.0, 1.0};
 double rotationAngle = 0.0;
 double rotationAxis[3];
 double translationVector[3] = {256.0, 256.0, 256.0};
@@ -122,15 +114,15 @@ void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 			texSetFiltering(&texture, texLINEAR);
 		draw();
 	}
-	if (key == GLFW_KEY_UP){
-		rho += 50;
-//		phi += M_PI/100;
-//		theta += M_PI/100;
-		camLookAt(&cam, target, rho, phi, theta);
-		double invIsom[4][4];
-		isoGetInverseHomogeneous(&cam.isometry,invIsom);
-		vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
-	}
+//	if (key == GLFW_KEY_UP){
+//		rho += 50;
+////		phi += M_PI/100;
+////		theta += M_PI/100;
+//		camLookAt(&cam, target, rho, phi, theta);
+//		double invIsom[4][4];
+//		isoGetInverseHomogeneous(&cam.isometry,invIsom);
+//		vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
+//	}
 }
 
 void handleTimeStep(double oldTime, double newTime) {
@@ -143,9 +135,9 @@ void handleTimeStep(double oldTime, double newTime) {
 	vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
 	mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
 	isoSetRotation(&iso,rot);
-	isoGetHomogeneous(&iso,isom);
+//	isoGetHomogeneous(&iso,isom);
 //	mat44Isometry(rot, translationVector, isom);
-	vecCopy(16, (double *)isom, &unif[mainUNIFMODELING]);
+//	vecCopy(16, (double *)isom, &unif[mainUNIFMODELING]);
 	draw();
 }
 

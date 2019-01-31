@@ -191,9 +191,8 @@ void mat444Multiply(const double m[4][4], const double n[4][4],
 alias the input. */
 void mat441Multiply(const double m[4][4], const double v[4],
 					double mTimesV[4]){
-    for (int i = 0;i < 4;i += 1)
-        for (int j = 0;j < 4;j += 1)
-            mTimesV[i] += m[i][j]*v[j];
+    for (int i = 0;i < 4;i = i + 1)
+        mTimesV[i] = m[i][0]*v[0] + m[i][1]*v[1] + m[i][2]*v[2] + m[i][3]*v[3];
 }
 
 /* Given a rotation and a translation, forms the 4x4 homogeneous matrix
@@ -220,8 +219,8 @@ void mat331TransposeMultiply(const double m[3][3], const double v[3],
 }
 
 void mat333TranposeMatrix(const double m[3][3], double mInv[3][3]){
-    for (i = 0;i < 3;i = i + 1)
-        for(j = 0;j < 3;j = j + 1)
+    for (int i = 0;i < 3;i = i + 1)
+        for(int j = 0;j < 3;j = j + 1)
         	mInv[i][j] = m[j][i];
 }
 

@@ -12,7 +12,9 @@
 
 #include "000pixel.h"
 #include "120vector.c"
-#include "120matrix.c"
+#include "140matrix.c"
+#include "140isometry.c"
+#include "140camera.c"
 #include "040texture.c"
 #include "130shading.c"
 #include "130depth.c"
@@ -36,6 +38,7 @@
 #define mainUNIFG 1
 #define mainUNIFB 2
 #define mainUNIFMODELING 3
+#define mainUNIFCAMERA 19
 #define mainTEXR 0
 #define mainTEXG 1
 #define mainTEXB 2
@@ -59,6 +62,8 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
 //	vecPrint(varyDim,vary);
 //	fflush(stdout);
+    double varyHomog[4] = {vary[0],vary[1],vary[2],1.0};
+    mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), varyHomog, vary);
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
 }
@@ -66,18 +71,29 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 shaShading sha;
 texTexture texture;
 depthBuffer depth;
+isoIsometry iso;
+camCamera cam;
+
 const texTexture *textures[1] = {&texture};
 const texTexture **tex = textures;
 meshMesh mesh1;
 meshMesh mesh2;
-double unif[3 + 16] = {1.0, 1.0, 1.0, 
+double unif[3 + 32] = {1.0, 1.0, 1.0,
 	1.0, 0.0, 0.0, 0.0, 
 	0.0, 1.0, 0.0, 0.0, 
 	0.0, 0.0, 1.0, 0.0, 
-	0.0, 0.0, 0.0, 1.0};
+	0.0, 0.0, 0.0, 1.0,
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,};
 double rotationAngle = 0.0;
 double rotationAxis[3];
 double translationVector[3] = {256.0, 256.0, 256.0};
+double rho = 0;
+double phi = 0;
+double theta = 0;
+double target[3] = {100,100,0};
 
 void draw(void) {
 	depthClearDepths(&depth,1000000000000);
@@ -106,8 +122,18 @@ void handleTimeStep(double oldTime, double newTime) {
 	double rot[3][3], isom[4][4];
 	vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
 	mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
-	mat44Isometry(rot, translationVector, isom);
+    isoSetRotation(&iso,rot);
+    isoGetHomogeneous(&iso,isom);
+//	mat44Isometry(rot, translationVector, isom);
 	vecCopy(16, (double *)isom, &unif[mainUNIFMODELING]);
+
+//	phi = rotationAngle;
+//	rho -= 1;
+//	theta = rho;
+    camLookAt(&cam, target, rho, phi, theta);
+    double invIsom[4][4];
+    isoGetInverseHomogeneous(&cam.isometry,invIsom);
+    vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
 	draw();
 }
 
@@ -127,12 +153,13 @@ int main(void) {
 		texSetFiltering(&texture, texNEAREST);
 		texSetLeftRight(&texture, texREPEAT);
 		texSetTopBottom(&texture, texREPEAT);
-		sha.unifDim = 3 + 16;
+		sha.unifDim = 3 + 32;
 		sha.attrDim = 3 + 2 + 3;
 		sha.varyDim = 3 + 2;
 		sha.colorPixel = colorPixel;
 		sha.transformVertex = transformVertex;
 		sha.texNum = 1;
+        isoSetTranslation(&iso,translationVector);
 		draw();
 		pixSetKeyUpHandler(handleKeyUp);
 		pixSetTimeStepHandler(handleTimeStep);
