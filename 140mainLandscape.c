@@ -119,6 +119,7 @@ void render(void) {
 	camGetProjectionInverseIsometry(&cam, projInvIsom);
 	mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
 	mat444Multiply(view, projInvIsom, viewProjInvIsom);
+//	mat44Print(projInvIsom);
 	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&buf, 1000000000.0);
 	vecCopy(16, (double *)viewProjInvIsom, &unifGrass[mainUNIFCAMERA]);
@@ -167,7 +168,7 @@ void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
 void handleTimeStep(double oldTime, double newTime) {
 	if (floor(newTime) - floor(oldTime) >= 1.0)
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
-	render();
+//	render();
 }
 
 int main(void) {
@@ -228,6 +229,7 @@ int main(void) {
 		vec3Set(landNum / 2.0, landNum / 2.0, 
 			landData[landNum / 2][landNum / 2], cameraTarget);
 		camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
+		render();
 		/* User interface. */
 		pixSetKeyDownHandler(handleKeyAny);
 		pixSetKeyRepeatHandler(handleKeyAny);

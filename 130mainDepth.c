@@ -12,7 +12,7 @@
 
 #include "000pixel.h"
 #include "120vector.c"
-#include "120matrix.c"
+#include "140matrix.c"
 #include "040texture.c"
 #include "130shading.c"
 #include "130depth.c"

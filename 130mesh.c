@@ -642,6 +642,7 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf, const shaShading *sha,
 			sha->transformVertex(sha->unifDim,unif,sha->attrDim,a,sha->varyDim,varyA);
 			sha->transformVertex(sha->unifDim,unif,sha->attrDim,b,sha->varyDim,varyB);
 			sha->transformVertex(sha->unifDim,unif,sha->attrDim,c,sha->varyDim,varyC);
+//			printf("???\n");
 //			vecPrint(sha->unifDim,unif);
 //            vecPrint(sha->varyDim,varyA);
 //            vecPrint(sha->varyDim,varyB);

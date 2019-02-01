@@ -79,11 +79,9 @@ void mat22Rotation(double theta, double m[2][2]){
 alias the input. */
 void mat333Multiply(const double m[3][3], const double n[3][3], 
 		double mTimesN[3][3]){
-	int i,j;
-	for (i = 0;i < 3;i = i + 1)
-		for(j = 0;j < 3;j = j + 1){
+	for (int i = 0;i < 3;i = i + 1)
+		for(int j = 0;j < 3;j = j + 1)
 			mTimesN[i][j] = m[i][0]*n[0][j] + m[i][1]*n[1][j] + m[i][2]*n[2][j];
-		}
 }
 
 /* Multiplies the 3x3 matrix m by the 3x1 matrix v. The output CANNOT safely 
@@ -171,8 +169,8 @@ void mat33BasisRotation(const double u[3], const double v[3],
     double R[3][3],S[3][3];
     vec3Cross(u,v,w);
     vec3Cross(a,b,c);
-    mat33FillByCol(u,v,w,R);
-    mat33FillByRow(a,b,c,S);
+    mat33FillByCol(a,b,c,S);
+    mat33FillByRow(u,v,w,R);
     mat333Multiply(S,R,rot);
 }
 
@@ -180,11 +178,9 @@ void mat33BasisRotation(const double u[3], const double v[3],
 alias the input. */
 void mat444Multiply(const double m[4][4], const double n[4][4],
 					double mTimesN[4][4]){
-    int i,j;
-    for (i = 0;i < 4;i = i + 1)
-        for(j = 0;j < 4;j = j + 1){
+    for (int i = 0;i < 4;i = i + 1)
+        for(int j = 0;j < 4;j = j + 1)
             mTimesN[i][j] = m[i][0]*n[0][j] + m[i][1]*n[1][j] + m[i][2]*n[2][j] + m[i][3]*n[3][j];
-        }
 }
 
 /* Multiplies m by v, placing the answer in mTimesV. The output CANNOT safely
@@ -229,4 +225,31 @@ void mat44Zero(double m[4][4]){
 	for(int i = 0;i < 4;i += 1)
 		for(int j = 0;j < 4;j += 1)
 			m[i][j] = 0;
+}
+
+/* Builds a 4x4 matrix for a viewport with lower left (0, 0) and upper right
+(width, height). This matrix maps a projected viewing volume
+[-1, 1] x [-1, 1] x [-1, 1] to screen [0, w] x [0, h] x [0, 1] (each interval
+in that order). */
+void mat44Viewport(double width, double height, double view[4][4]){
+    mat44Zero(view);
+    view[0][0] = width / 2.0;
+    view[0][3] = width / 2.0;
+    view[1][1] = height / 2.0;
+    view[1][3] = height / 2.0;
+    view[2][2] = 0.5;
+    view[2][3] = 0.5;
+    view[3][3] = 1.0;
+}
+
+/* Inverse to mat44Viewport. */
+void mat44InverseViewport(double width, double height, double view[4][4]){
+    mat44Zero(view);
+    view[0][0] = 2.0 / width;
+    view[1][1] = 2.0 / height;
+    view[2][2] = 2.0;
+    view[3][3] = 1.0;
+    view[0][3] = -1.0;
+    view[1][3] = -1.0;
+    view[2][3] = -1.0;
 }

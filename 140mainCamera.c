@@ -2,7 +2,7 @@
 
 
 /* On macOS, compile with...
-    clang 120main3D.c 000pixel.o -lglfw -framework OpenGL
+    clang 140mainCamera.c 000pixel.o -lglfw -framework OpenGL
 */
 
 #include <stdio.h>
@@ -57,12 +57,12 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 void transformVertex(int unifDim, const double unif[], int attrDim, 
 		const double attr[], int varyDim, double vary[]) {
 	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
+	double varyHomog[4];
 //	vecPrint(attrDim,attr);
 //	fflush(stdout);
-	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, vary);
+	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, varyHomog);
 //	vecPrint(varyDim,vary);
 //	fflush(stdout);
-    double varyHomog[4] = {vary[0],vary[1],vary[2],1.0};
     mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), varyHomog, vary);
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
@@ -93,7 +93,7 @@ double translationVector[3] = {256.0, 256.0, 256.0};
 double rho = 0;
 double phi = 0;
 double theta = 0;
-double target[3] = {100,100,0};
+double target[3] = {256.0, 256.0, 256.0};
 
 void draw(void) {
 	depthClearDepths(&depth,1000000000000);
@@ -102,13 +102,28 @@ void draw(void) {
 	meshRender(&mesh2, &depth, &sha, unif, tex);
 }
 
-void handleKeyUp(int key, int shiftIsDown, int controlIsDown, 
+void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 		int altOptionIsDown, int superCommandIsDown) {
 	if (key == GLFW_KEY_ENTER) {
 		if (texture.filtering == texLINEAR)
 			texSetFiltering(&texture, texNEAREST);
 		else
 			texSetFiltering(&texture, texLINEAR);
+		draw();
+	}
+	else {
+		if (key == GLFW_KEY_W)
+			 phi-= M_PI / 10;
+		if (key == GLFW_KEY_S)
+			phi += M_PI / 10;
+		if (key == GLFW_KEY_A)
+			theta -= M_PI / 10;
+		if (key == GLFW_KEY_D)
+			theta += M_PI / 10;
+		camLookAt(&cam, target, rho, phi, theta);
+		double invIsom[4][4];
+		isoGetInverseHomogeneous(&cam.isometry,invIsom);
+		vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
 		draw();
 	}
 }
@@ -118,7 +133,7 @@ void handleTimeStep(double oldTime, double newTime) {
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
 	unif[mainUNIFR] = sin(newTime);
 	unif[mainUNIFG] = cos(oldTime);
-	rotationAngle += (newTime - oldTime);
+//	rotationAngle += (newTime - oldTime);
 	double rot[3][3], isom[4][4];
 	vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
 	mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
@@ -142,7 +157,7 @@ int main(void) {
 		return 1;
 	else if (texInitializeFile(&texture, "../Noether_retusche_nachcoloriert.jpg") != 0)
 		return 2;
-	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -64.0, -20) != 0)
+	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -65.0, -10) != 0)
 	//else if (meshInitializeSphere(&mesh, 64.0, 16, 32) != 0)
 		return 3;
 	else if (meshInitializeSphere(&mesh2, 64.0, 16, 32) != 0)

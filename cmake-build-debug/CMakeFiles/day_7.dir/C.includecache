@@ -6,19 +6,29 @@
 
 #IncludeRegexTransform: 
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/000pixel.h
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/000pixel.h
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/040texture.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/040texture.c
 stb_image.h
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/stb_image.h
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/stb_image.h
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/120matrix.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/120vector.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/120vector.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130depth.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130depth.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130mesh.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130mainDepth.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130shading.c
+stdio.h
+-
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130triangle.c
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140camera.c
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140isometry.c
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140mainCamera.c
 stdio.h
 -
 stdlib.h
@@ -28,39 +38,31 @@ math.h
 GLFW/glfw3.h
 -
 000pixel.h
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/000pixel.h
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/000pixel.h
 120vector.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/120vector.c
-120matrix.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/120matrix.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/120vector.c
+140matrix.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140matrix.c
+140isometry.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140isometry.c
+140camera.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140camera.c
 040texture.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/040texture.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/040texture.c
 130shading.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130shading.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130shading.c
 130depth.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130depth.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130depth.c
 130triangle.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130triangle.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130triangle.c
 130mesh.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130mesh.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/130mesh.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130mesh.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140matrix.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130shading.c
-stdio.h
--
-
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/130triangle.c
-stdio.h
--
-math.h
--
-000pixel.h
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/000pixel.h
-
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/stb_image.h
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/stb_image.h
 stb_image.h
-/Accounts/tianh/Downloads/ComputerGraphics/Day09/stb_image.h
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/stb_image.h
 stdio.h
 -
 stdarg.h

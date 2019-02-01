@@ -3,6 +3,14 @@
 
 /*** In general dimensions ***/
 
+void vecClear3(int dim, double v[] , double w[], double u[]){
+    for (int i = 0; i < dim; i += 1) {
+        v[i] = 0.0;
+        w[i] = 0.0;
+        u[i] = 0.0;
+    }
+}
+
 /* Copies the dim-dimensional vector v to the dim-dimensional vector copy. The 
 output can safely alias the input. */
 void vecCopy(int dim, const double v[], double copy[]) {

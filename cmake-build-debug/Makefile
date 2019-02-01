@@ -48,10 +48,10 @@ RM = /Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Accounts/tianh/Downloads/ComputerGraphics/Day09
+CMAKE_SOURCE_DIR = /Accounts/tianh/Downloads/ComputerGraphics/Day11
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Accounts/tianh/Downloads/ComputerGraphics/Day09/cmake-build-debug
+CMAKE_BINARY_DIR = /Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Accounts/tianh/Downloads/ComputerGraphics/Day09/cmake-build-debug/CMakeFiles /Accounts/tianh/Downloads/ComputerGraphics/Day09/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug/CMakeFiles /Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Accounts/tianh/Downloads/ComputerGraphics/Day09/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -123,32 +123,32 @@ day_7/fast:
 	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/build
 .PHONY : day_7/fast
 
-130mainDepth.o: 130mainDepth.c.o
+140mainCamera.o: 140mainCamera.c.o
 
-.PHONY : 130mainDepth.o
+.PHONY : 140mainCamera.o
 
 # target to build an object file
-130mainDepth.c.o:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/130mainDepth.c.o
-.PHONY : 130mainDepth.c.o
+140mainCamera.c.o:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.o
+.PHONY : 140mainCamera.c.o
 
-130mainDepth.i: 130mainDepth.c.i
+140mainCamera.i: 140mainCamera.c.i
 
-.PHONY : 130mainDepth.i
+.PHONY : 140mainCamera.i
 
 # target to preprocess a source file
-130mainDepth.c.i:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/130mainDepth.c.i
-.PHONY : 130mainDepth.c.i
+140mainCamera.c.i:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.i
+.PHONY : 140mainCamera.c.i
 
-130mainDepth.s: 130mainDepth.c.s
+140mainCamera.s: 140mainCamera.c.s
 
-.PHONY : 130mainDepth.s
+.PHONY : 140mainCamera.s
 
 # target to generate assembly for a file
-130mainDepth.c.s:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/130mainDepth.c.s
-.PHONY : 130mainDepth.c.s
+140mainCamera.c.s:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.s
+.PHONY : 140mainCamera.c.s
 
 # Help Target
 help:
@@ -159,9 +159,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... day_7"
-	@echo "... 130mainDepth.o"
-	@echo "... 130mainDepth.i"
-	@echo "... 130mainDepth.s"
+	@echo "... 140mainCamera.o"
+	@echo "... 140mainCamera.i"
+	@echo "... 140mainCamera.s"
 .PHONY : help
 
 

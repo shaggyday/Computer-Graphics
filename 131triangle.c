@@ -70,6 +70,98 @@ double bMinusA[],double cMinusA[]){
         x[i] = a[i] + pTimesBMinusA[i] + qTimesCMinusA[i];
 }
 
+//void trimHelper()
+
+int trim(int varyDim, double a[], double b[], double c[], double slopeAB,
+        double slopeBC, double slopeAC, double bMinusA[], double cMinusA[], double MInv[2][2]){
+    if(prepareInterpolate(varyDim,MInv,a,b,c,bMinusA,cMinusA)!=0){
+        return 1;
+    }
+
+    double tempA[varyDim], tempB[varyDim], tempC[varyDim];
+    vecCopy(varyDim,a,tempA);
+    vecCopy(varyDim,b,tempB);
+    vecCopy(varyDim,c,tempC);
+    if (c[0] < b[0]) {
+        if (a[0] < 0 && c[0] <= 0 && b[0] > 0) {
+            tempA[0] = 0;
+            tempA[1] = YCoordOf(tempA[0],slopeAB,a[0],a[1]);
+            tempC[0] = 0;
+            tempC[1] = YCoordOf(tempC[0],slopeBC,c[0],c[1]);
+        }
+        else if (c[1] > mainHEIGHT){
+            if(a[1] >= mainHEIGHT && b[1] < mainHEIGHT){
+                tempA[1] = mainHEIGHT;
+                tempA[0] = XCoordOf(tempA[1],slopeAB,a[0],a[1]);
+                tempC[1] = mainHEIGHT;
+                tempC[0] = XCoordOf(tempC[1],slopeBC,b[0],b[1]);
+            }
+            if(b[1] >= mainHEIGHT && a[1] < mainHEIGHT) {
+                tempB[1] = mainHEIGHT;
+                tempB[0] = XCoordOf(tempB[1], slopeAB, a[0], a[1]);
+                tempC[1] = mainHEIGHT;
+                tempC[0] = XCoordOf(tempC[1], slopeAC, a[0], a[1]);
+            }
+        }
+        else if (a[0] < mainWIDTH && b[0] > mainHEIGHT && c[0] >= mainWIDTH){
+            tempB[0] = mainWIDTH;
+            tempB[1] = YCoordOf(tempB[0],slopeAB,a[0],a[1]);
+            tempC[0] = mainWIDTH;
+            tempC[1] = YCoordOf(tempC[0],slopeBC,a[0],a[1]);
+        }
+        else if (a[1] <= 0 && b[1] <= 0 && c[1] > 0){
+            tempA[1] = 0;
+            tempA[0] = XCoordOf(tempA[1],slopeAC,a[0],a[1]);
+            tempB[1] = 0;
+            tempB[0] = XCoordOf(tempB[1],slopeBC,b[0],b[1]);
+        }
+        else
+            return 0;
+    }
+    else{
+        if (c[0] > 0 && a[0] < 0 && b[0] <= 0){
+            tempA[0] = 0;
+            tempA[1] = YCoordOf(tempA[0],slopeAC,a[0],a[1]);
+            tempB[0] = 0;
+            tempB[1] = YCoordOf(tempB[0],slopeBC,b[0],b[1]);
+        }
+        else if (a[1] >= mainHEIGHT && c[1] >= mainHEIGHT && b[1] < mainHEIGHT){
+            tempA[1] = mainHEIGHT;
+            tempA[0] = XCoordOf(tempA[1],slopeAB,a[0],a[1]);
+            tempC[1] = mainHEIGHT;
+            tempC[0] = XCoordOf(tempC[1],slopeBC,b[0],b[1]);
+        }
+        else if (a[0] < mainWIDTH && b[0] >= mainWIDTH && c[0] > mainWIDTH){
+            tempB[0] = mainWIDTH;
+            tempB[1] = YCoordOf(tempB[0],slopeAB,a[0],a[1]);
+            tempC[0] = mainWIDTH;
+            tempC[1] = YCoordOf(tempC[0],slopeAC,a[0],a[1]);
+        }
+        else if (b[1] < 0){
+            if (a[1] > 0 && c[1] <= 0){
+                tempB[1] = 0;
+                tempB[0] = XCoordOf(tempB[1],slopeAB,a[0],a[1]);
+                tempC[1] = 0;
+                tempC[0] = XCoordOf(tempC[1],slopeAC,a[0],a[1]);
+            }
+            if (c[1] > 0 && a[1] <= 0){
+                tempA[1] = 0;
+                tempA[0] = XCoordOf(tempA[1],slopeAC,a[0],a[1]);
+                tempB[1] = 0;
+                tempB[0] = XCoordOf(tempB[1],slopeBC,b[0],b[1]);
+            }
+        }
+        else
+            return 0;
+    }
+    interpolate(varyDim,tempA,MInv,a,bMinusA,cMinusA);
+    interpolate(varyDim,tempB,MInv,a,bMinusA,cMinusA);
+    interpolate(varyDim,tempC,MInv,a,bMinusA,cMinusA);
+    vecCopy(varyDim,tempA,a);
+    vecCopy(varyDim,tempB,b);
+    vecCopy(varyDim,tempC,c);
+    return 0;
+}
 
 /* Assumes that the 0th and 1th elements of a, b, c are the 'x' and 'y'
 coordinates of the vertices, respectively (used in rasterization, and to
@@ -89,7 +181,11 @@ void triRender(const shaShading *sha, depthBuffer *buf, const double unif[],
     //Preparing to interpolate
     double bMinusA[sha->varyDim],cMinusA[sha->varyDim];
     double MInv[2][2];
-    if(prepareInterpolate(sha->varyDim,MInv,aPrime,bPrime,cPrime,bMinusA,cMinusA)!=0){
+//    if(prepareInterpolate(sha->varyDim,MInv,aPrime,bPrime,cPrime,bMinusA,cMinusA)!=0){
+//        return;
+//    }
+    //Trim away pixels outside the window
+    if(trim(sha->varyDim,aPrime,bPrime,cPrime,slopeAB,slopeBC,slopeAC,bMinusA,cMinusA,MInv)!=0){
         return;
     }
 
@@ -140,6 +236,6 @@ void triRender(const shaShading *sha, depthBuffer *buf, const double unif[],
                     pixSetRGB((int)x[0], (int)x[1], rgbd[0], rgbd[1], rgbd[2]);
                 }
             }
-        }         
+        }
     }
 }

@@ -6,5 +6,5 @@ C_FLAGS = -g
 
 C_DEFINES = 
 
-C_INCLUDES = -I/Accounts/tianh/Downloads/ComputerGraphics/Day09/. -I/usr/local/include 
+C_INCLUDES = -I/Accounts/tianh/Downloads/ComputerGraphics/Day11/. -I/usr/local/include 
 

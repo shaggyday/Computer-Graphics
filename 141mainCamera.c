@@ -116,8 +116,8 @@ void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 	}
 //	if (key == GLFW_KEY_UP){
 //		rho += 50;
-////		phi += M_PI/100;
-////		theta += M_PI/100;
+//		phi += M_PI/100;
+//		theta += M_PI/100;
 //		camLookAt(&cam, target, rho, phi, theta);
 //		double invIsom[4][4];
 //		isoGetInverseHomogeneous(&cam.isometry,invIsom);
