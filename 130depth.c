@@ -43,6 +43,7 @@ void depthClearDepths(depthBuffer *buf, double depth) {
 
 /* Sets the depth-value at pixel (i, j) to the given depth. */
 void depthSetDepth(depthBuffer *buf, int i, int j, double depth) {
+//	printf("%f\n",depth);
 	if (0 <= i && i < buf->width && 0 <= j && j < buf->height)
 		buf->depths[i + buf->width * j] = depth;
 }

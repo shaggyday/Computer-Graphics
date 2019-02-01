@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/Accounts/tianh/Downloads/ComputerGraphics/Day11/140mainCamera.c" "/Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug/CMakeFiles/day_7.dir/140mainCamera.c.o"
+  "/Accounts/tianh/Downloads/ComputerGraphics/Day11/140mainLandscape.c" "/Accounts/tianh/Downloads/ComputerGraphics/Day11/cmake-build-debug/CMakeFiles/day_7.dir/140mainLandscape.c.o"
   )
 set(CMAKE_C_COMPILER_ID "AppleClang")
 

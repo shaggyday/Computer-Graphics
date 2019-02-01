@@ -123,32 +123,32 @@ day_7/fast:
 	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/build
 .PHONY : day_7/fast
 
-140mainCamera.o: 140mainCamera.c.o
+140mainLandscape.o: 140mainLandscape.c.o
 
-.PHONY : 140mainCamera.o
+.PHONY : 140mainLandscape.o
 
 # target to build an object file
-140mainCamera.c.o:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.o
-.PHONY : 140mainCamera.c.o
+140mainLandscape.c.o:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainLandscape.c.o
+.PHONY : 140mainLandscape.c.o
 
-140mainCamera.i: 140mainCamera.c.i
+140mainLandscape.i: 140mainLandscape.c.i
 
-.PHONY : 140mainCamera.i
+.PHONY : 140mainLandscape.i
 
 # target to preprocess a source file
-140mainCamera.c.i:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.i
-.PHONY : 140mainCamera.c.i
+140mainLandscape.c.i:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainLandscape.c.i
+.PHONY : 140mainLandscape.c.i
 
-140mainCamera.s: 140mainCamera.c.s
+140mainLandscape.s: 140mainLandscape.c.s
 
-.PHONY : 140mainCamera.s
+.PHONY : 140mainLandscape.s
 
 # target to generate assembly for a file
-140mainCamera.c.s:
-	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainCamera.c.s
-.PHONY : 140mainCamera.c.s
+140mainLandscape.c.s:
+	$(MAKE) -f CMakeFiles/day_7.dir/build.make CMakeFiles/day_7.dir/140mainLandscape.c.s
+.PHONY : 140mainLandscape.c.s
 
 # Help Target
 help:
@@ -159,9 +159,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... day_7"
-	@echo "... 140mainCamera.o"
-	@echo "... 140mainCamera.i"
-	@echo "... 140mainCamera.s"
+	@echo "... 140mainLandscape.o"
+	@echo "... 140mainLandscape.i"
+	@echo "... 140mainLandscape.s"
 .PHONY : help
 
 

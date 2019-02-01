@@ -1,1 +1,1 @@
-clang -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/day_7.dir/140mainCamera.c.o ../000pixel.o  -o day_7 -lglfw -framework OpenGL -framework OpenGL -lm 
+clang -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/day_7.dir/140mainLandscape.c.o ../000pixel.o  -o day_7 -lglfw -framework OpenGL -framework OpenGL -lm 

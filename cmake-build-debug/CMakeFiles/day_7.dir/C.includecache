@@ -28,12 +28,16 @@ stdio.h
 
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/140isometry.c
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day11/140mainCamera.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140landscape.c
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140mainLandscape.c
 stdio.h
 -
 stdlib.h
 -
 math.h
+-
+time.h
 -
 GLFW/glfw3.h
 -
@@ -43,10 +47,6 @@ GLFW/glfw3.h
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/120vector.c
 140matrix.c
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/140matrix.c
-140isometry.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day11/140isometry.c
-140camera.c
-/Accounts/tianh/Downloads/ComputerGraphics/Day11/140camera.c
 040texture.c
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/040texture.c
 130shading.c
@@ -57,6 +57,12 @@ GLFW/glfw3.h
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/130triangle.c
 130mesh.c
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/130mesh.c
+140isometry.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140isometry.c
+140camera.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140camera.c
+140landscape.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day11/140landscape.c
 
 /Accounts/tianh/Downloads/ComputerGraphics/Day11/140matrix.c
 

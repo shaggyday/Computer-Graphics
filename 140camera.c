@@ -95,6 +95,7 @@ void camGetOrthographic(const camCamera *cam, double proj[4][4]) {
     double far = cam->projection[camPROJF];
     double near = cam->projection[camPROJN];
 //    printf("%f,%f,%f,%f,%f,%f\n",left,right,bottom,top,far,near);
+    mat44Zero(proj);
 	proj[0][0] = 2.0 / (right - left);
     proj[0][3] = (-right - left) / (right - left);
     proj[1][1] = 2.0 / (top - bottom);
@@ -156,11 +157,12 @@ void camSetFrustum(camCamera *cam, double fovy, double focal, double ratio,
 /* Returns the homogeneous 4x4 product of the camera's projection and the 
 camera's inverse isometry. */
 void camGetProjectionInverseIsometry(camCamera *cam, double homog[4][4]) {
-    double invIsom[4][4];
-    isoGetInverseHomogeneous(cam->isometry,invIsom);
-    double proj[4][4];
-    camGetOrthographic(cam,proj);
-	mat444Multiply(invIsom,proj,homog);
+    double proj[4][4],invIsom[4][4];
+    if (cam->projectionType == camORTHOGRAPHIC) {
+        camGetOrthographic(cam, proj);
+        isoGetInverseHomogeneous(&cam->isometry, invIsom);
+        mat444Multiply(proj, invIsom, homog);
+    }
 }
 
 
