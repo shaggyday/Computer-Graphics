@@ -157,10 +157,9 @@ void camSetFrustum(camCamera *cam, double fovy, double focal, double ratio,
 camera's inverse isometry. */
 void camGetProjectionInverseIsometry(camCamera *cam, double homog[4][4]) {
     double invIsom[4][4];
-    isoGetInverseHomogeneous(&cam->isometry,invIsom);
+    isoGetInverseHomogeneous(cam->isometry,invIsom);
     double proj[4][4];
     camGetOrthographic(cam,proj);
-//    mat44Print(proj);
 	mat444Multiply(invIsom,proj,homog);
 }
 

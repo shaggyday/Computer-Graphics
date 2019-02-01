@@ -107,4 +107,3 @@ void landStatistics(int width, int height, double *data, double *min,
 	*mean = *mean / (width * height);
 }
 
-
