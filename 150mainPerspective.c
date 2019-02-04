@@ -116,18 +116,18 @@ double unifWater[3 + 1 + 3 + 16] = {
 /*** User interface ***/
 
 void render(void) {
-	double view[4][4], projInvIsom[4][4], viewProjInvIsom[4][4];
+	double view[4][4], projInvIsom[4][4];//, viewProjInvIsom[4][4];
 	camGetProjectionInverseIsometry(&cam, projInvIsom);
 	mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
-	mat444Multiply(view, projInvIsom, viewProjInvIsom);
+//	mat444Multiply(view, projInvIsom, viewProjInvIsom);
 	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&buf, 1000000000.0);
-//	vecCopy(16, (double *)viewProjInvIsom, &unifGrass[mainUNIFCAMERA]);
-	meshRender(&grass, &buf, viewProjInvIsom, &sha, unifGrass, NULL);
-//	vecCopy(16, (double *)viewProjInvIsom, &unifRock[mainUNIFCAMERA]);
-	meshRender(&rock, &buf, viewProjInvIsom, &sha, unifRock, NULL);
-//	vecCopy(16, (double *)viewProjInvIsom, &unifWater[mainUNIFCAMERA]);
-	meshRender(&water, &buf, viewProjInvIsom, &sha, unifWater, NULL);
+	vecCopy(16, (double *)projInvIsom, &unifGrass[mainUNIFCAMERA]);
+	meshRender(&grass, &buf, view, &sha, unifGrass, NULL);
+	vecCopy(16, (double *)projInvIsom, &unifRock[mainUNIFCAMERA]);
+	meshRender(&rock, &buf, view, &sha, unifRock, NULL);
+	vecCopy(16, (double *)projInvIsom, &unifWater[mainUNIFCAMERA]);
+	meshRender(&water, &buf, view, &sha, unifWater, NULL);
 }
 
 void handleKeyAny(int key, int shiftIsDown, int controlIsDown, 
@@ -145,9 +145,9 @@ void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
 	else if (key == GLFW_KEY_E)
 		cameraRho *= 1.1;
 	else if (key == GLFW_KEY_K)
-		cameraTarget[0] -= 0.5;
+		cameraTarget[0] -= 5;
 	else if (key == GLFW_KEY_SEMICOLON)
-		cameraTarget[0] += 0.5;
+		cameraTarget[0] += 5;
 	else if (key == GLFW_KEY_L)
 		cameraTarget[1] -= 0.5;
 	else if (key == GLFW_KEY_O)
