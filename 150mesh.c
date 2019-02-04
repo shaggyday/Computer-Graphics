@@ -631,34 +631,15 @@ int findClipped(int clipped[3],double varyA[], double varyB[], double varyC[]){
     return clippedNum;
 }
 
-void clipVertex(int varyDim, double clipped[], double unclipped[]){
+void clipVertex(int varyDim, double clipped[], double unclipped[], double newVary[]){
     double temp[varyDim];
     vecCopy(varyDim,unclipped,temp);
-    double t = (clipped[2]+clipped[3])/(clipped[2]+clipped[3]-temp[2]-temp[3]);
-    vecSubtract(varyDim,temp,clipped,temp);
+    double t = (clipped[2]+clipped[3])/(clipped[2]+clipped[3]-unclipped[2]-unclipped[3]);
+    vecSubtract(varyDim,unclipped,clipped,temp);
     vecScale(varyDim,t,temp,temp);
-    vecAdd(varyDim,clipped,temp,clipped);
+    vecAdd(varyDim,clipped,temp,newVary);
 }
 
-void clip(int clipped[], int clippedNum, int varyDim,double varyA[], double varyB[], double varyC[]){
-    if (clippedNum == 2){
-        if (clipped[0] == 0) {
-            clipVertex(varyDim,varyB,varyA);
-            clipVertex(varyDim,varyC,varyA);
-        }
-        else if (clipped[1] == 0){
-            clipVertex(varyDim,varyA,varyB);
-            clipVertex(varyDim,varyC,varyB);
-        }
-        else if (clipped[2] == 0){
-            clipVertex(varyDim,varyA,varyC);
-            clipVertex(varyDim,varyB,varyC);
-        }
-    }
-    else if (clippedNum == 1){
-
-    }
-}
 
 void viewportNHomoDivide(const double viewport[4][4],int varyDim,double vary[]){
     double temp[varyDim];
@@ -699,16 +680,16 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf,
                 continue;
             else if (clippedNum == 2) {
 				if (clipped[0] == 0) {
-					clipVertex(sha->varyDim,varyB,varyA);
-					clipVertex(sha->varyDim,varyC,varyA);
+					clipVertex(sha->varyDim,varyB,varyA,varyB);
+					clipVertex(sha->varyDim,varyC,varyA,varyC);
 				}
 				else if (clipped[1] == 0){
-					clipVertex(sha->varyDim,varyA,varyB);
-					clipVertex(sha->varyDim,varyC,varyB);
+					clipVertex(sha->varyDim,varyA,varyB,varyA);
+					clipVertex(sha->varyDim,varyC,varyB,varyC);
 				}
 				else if (clipped[2] == 0){
-					clipVertex(sha->varyDim,varyA,varyC);
-					clipVertex(sha->varyDim,varyB,varyC);
+					clipVertex(sha->varyDim,varyA,varyC,varyA);
+					clipVertex(sha->varyDim,varyB,varyC,varyB);
 				}
 				viewportNHomoDivide(viewport, sha->varyDim, varyA);
 				viewportNHomoDivide(viewport, sha->varyDim, varyB);
@@ -716,21 +697,38 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf,
 				triRender(sha, buf, unif, tex, varyA, varyB, varyC);
 			}
             else if (clippedNum == 1){
+            	double vary1[sha->varyDim];
+            	double vary2[sha->varyDim];
 				if (clipped[0] == 1) {
-					clipVertex(sha->varyDim,varyB,varyA);
-					clipVertex(sha->varyDim,varyC,varyA);
+					clipVertex(sha->varyDim,varyA,varyC,vary1);
+					clipVertex(sha->varyDim,varyA,varyB,vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, vary1);
+					viewportNHomoDivide(viewport, sha->varyDim, vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, varyB);
+					viewportNHomoDivide(viewport, sha->varyDim, varyC);
+					triRender(sha, buf, unif, tex, vary1, varyB, varyC);
+					triRender(sha, buf, unif, tex, vary1, vary2, varyB);
 				}
 				else if (clipped[1] == 1){
-					clipVertex(sha->varyDim,varyA,varyB);
-					clipVertex(sha->varyDim,varyC,varyB);
+					clipVertex(sha->varyDim,varyB,varyA,vary1);
+					clipVertex(sha->varyDim,varyB,varyC,vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, vary1);
+					viewportNHomoDivide(viewport, sha->varyDim, vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, varyA);
+					viewportNHomoDivide(viewport, sha->varyDim, varyC);
+					triRender(sha, buf, unif, tex, vary1, varyC, varyA);
+					triRender(sha, buf, unif, tex, vary1, vary2, varyC);
 				}
 				else if (clipped[2] == 1){
-					clipVertex(sha->varyDim,varyA,varyC);
-					clipVertex(sha->varyDim,varyB,varyC);
+					clipVertex(sha->varyDim,varyC,varyB,vary1);
+					clipVertex(sha->varyDim,varyC,varyA,vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, vary1);
+					viewportNHomoDivide(viewport, sha->varyDim, vary2);
+					viewportNHomoDivide(viewport, sha->varyDim, varyA);
+					viewportNHomoDivide(viewport, sha->varyDim, varyB);
+					triRender(sha, buf, unif, tex, vary1, varyA, varyB);
+					triRender(sha, buf, unif, tex, vary1, vary2, varyA);
 				}
-				viewportNHomoDivide(viewport, sha->varyDim, varyA);
-				triRender(sha, buf, unif, tex, varyA, varyB, varyC);
-				triRender(sha, buf, unif, tex, varyA, varyB, varyC);
             }
             else {
 				viewportNHomoDivide(viewport, sha->varyDim, varyA);
