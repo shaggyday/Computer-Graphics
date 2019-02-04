@@ -666,6 +666,7 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf,
 			a = meshGetVertexPointer(mesh, triangle[0]);
 			b = meshGetVertexPointer(mesh, triangle[1]);
 			c = meshGetVertexPointer(mesh, triangle[2]);
+			// pass triangle vertices to vertex shader
 			sha->transformVertex(sha->unifDim, unif, sha->attrDim, a, sha->varyDim, varyA);
 			sha->transformVertex(sha->unifDim, unif, sha->attrDim, b, sha->varyDim, varyB);
 			sha->transformVertex(sha->unifDim, unif, sha->attrDim, c, sha->varyDim, varyC);
@@ -674,7 +675,9 @@ void meshRender(const meshMesh *mesh, depthBuffer *buf,
 //            vecPrint(sha->varyDim,varyA);
 //            vecPrint(sha->varyDim,varyB);
 //            vecPrint(sha->varyDim,varyC);
-            int clipped[3] = {0, 0, 0};
+
+			// gotta clip'em all
+            int clipped[3] = {0, 0, 0}; //records which vertices are clipped
             int clippedNum = findClipped(clipped,varyA,varyB,varyC);
             if (clippedNum == 3)
                 continue;
