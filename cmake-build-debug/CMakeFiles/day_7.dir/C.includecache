@@ -8,7 +8,9 @@
 
 /Accounts/tianh/Downloads/ComputerGraphics/Day13/000pixel.h
 
-/Accounts/tianh/Downloads/ComputerGraphics/Day13/160mainInterpolating.c
+/Accounts/tianh/Downloads/ComputerGraphics/Day13/170engine.h
+
+/Accounts/tianh/Downloads/ComputerGraphics/Day13/170mainEngine.c
 stdio.h
 -
 stdlib.h
@@ -22,8 +24,6 @@ GLFW/glfw3.h
 000pixel.h
 /Accounts/tianh/Downloads/ComputerGraphics/Day13/000pixel.h
 170engine.h
-/Accounts/tianh/Downloads/ComputerGraphics/Day13/170engine.h
-
 /Accounts/tianh/Downloads/ComputerGraphics/Day13/170engine.h
 
 /usr/local/include/GL/glcorearb.h

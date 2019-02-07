@@ -57,29 +57,29 @@ include CMakeFiles/day_7.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/day_7.dir/flags.make
 
-CMakeFiles/day_7.dir/160mainInterpolating.c.o: CMakeFiles/day_7.dir/flags.make
-CMakeFiles/day_7.dir/160mainInterpolating.c.o: ../160mainInterpolating.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Accounts/tianh/Downloads/ComputerGraphics/Day13/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/day_7.dir/160mainInterpolating.c.o"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/day_7.dir/160mainInterpolating.c.o   -c /Accounts/tianh/Downloads/ComputerGraphics/Day13/160mainInterpolating.c
+CMakeFiles/day_7.dir/170mainEngine.c.o: CMakeFiles/day_7.dir/flags.make
+CMakeFiles/day_7.dir/170mainEngine.c.o: ../170mainEngine.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Accounts/tianh/Downloads/ComputerGraphics/Day13/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/day_7.dir/170mainEngine.c.o"
+	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/day_7.dir/170mainEngine.c.o   -c /Accounts/tianh/Downloads/ComputerGraphics/Day13/170mainEngine.c
 
-CMakeFiles/day_7.dir/160mainInterpolating.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/day_7.dir/160mainInterpolating.c.i"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Accounts/tianh/Downloads/ComputerGraphics/Day13/160mainInterpolating.c > CMakeFiles/day_7.dir/160mainInterpolating.c.i
+CMakeFiles/day_7.dir/170mainEngine.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/day_7.dir/170mainEngine.c.i"
+	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Accounts/tianh/Downloads/ComputerGraphics/Day13/170mainEngine.c > CMakeFiles/day_7.dir/170mainEngine.c.i
 
-CMakeFiles/day_7.dir/160mainInterpolating.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/day_7.dir/160mainInterpolating.c.s"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Accounts/tianh/Downloads/ComputerGraphics/Day13/160mainInterpolating.c -o CMakeFiles/day_7.dir/160mainInterpolating.c.s
+CMakeFiles/day_7.dir/170mainEngine.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/day_7.dir/170mainEngine.c.s"
+	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Accounts/tianh/Downloads/ComputerGraphics/Day13/170mainEngine.c -o CMakeFiles/day_7.dir/170mainEngine.c.s
 
 # Object files for target day_7
 day_7_OBJECTS = \
-"CMakeFiles/day_7.dir/160mainInterpolating.c.o"
+"CMakeFiles/day_7.dir/170mainEngine.c.o"
 
 # External object files for target day_7
 day_7_EXTERNAL_OBJECTS = \
 "/Accounts/tianh/Downloads/ComputerGraphics/Day13/000pixel.o" \
 "/Accounts/tianh/Downloads/ComputerGraphics/Day13/170engine.o"
 
-day_7: CMakeFiles/day_7.dir/160mainInterpolating.c.o
+day_7: CMakeFiles/day_7.dir/170mainEngine.c.o
 day_7: ../000pixel.o
 day_7: ../170engine.o
 day_7: CMakeFiles/day_7.dir/build.make

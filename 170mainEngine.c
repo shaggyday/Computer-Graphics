@@ -66,8 +66,7 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 	rgbd[0] = sample[mainTEXR] * unif[mainUNIFR];
 	rgbd[1] = sample[mainTEXG] * unif[mainUNIFG];
 	rgbd[2] = sample[mainTEXB] * unif[mainUNIFB];
-	rgbd[3] = -vary[mainVARYZ];
-//	printf("%f\n",rgbd[3]);
+	rgbd[3] = vary[mainVARYZ];
 }
 
 void transformVertex(int unifDim, const double unif[], int attrDim, 
@@ -79,7 +78,6 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 	vecCopy(4, varyHom, vary);
 	vary[mainVARYS] = attr[mainATTRS];
 	vary[mainVARYT] = attr[mainATTRT];
-//	vecPrint(varyDim,vary);
 }
 
 /*** Globals ***/
@@ -180,7 +178,7 @@ void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 void handleTimeStep(double oldTime, double newTime) {
 	if (floor(newTime) - floor(oldTime) >= 1.0)
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
-//    rotationAngle += (newTime - oldTime);
+    rotationAngle += (newTime - oldTime);
 	render();
 }
 
@@ -190,7 +188,6 @@ int main(void) {
 	else if (texInitializeFile(&texture, "../Noether_retusche_nachcoloriert.jpg") != 0)
 		return 2;
 	else if (meshInitializeBox(&mesh1, -128.0, 128.0, -64.0, 64.0, -65.0, -10) != 0)
-		//else if (meshInitializeSphere(&mesh, 64.0, 16, 32) != 0)
 		return 3;
 	else if (meshInitializeSphere(&mesh2, 64.0, 16, 32) != 0)
 		return 4;
