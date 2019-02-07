@@ -2,13 +2,13 @@
 #include <stdio.h>
 
 typedef struct shaShading shaShading;
-
 struct shaShading {
-    int unifDim, texNum, attrDim, varyDim;
-    void (*colorPixel)(int, const double[], int, const texTexture *[], int,
-            const double[],double[4]);
-    void (*transformVertex)(int, const double[], int,
-                         const double[], int, double[]);
+    int unifDim, attrDim, texNum, varyDim;
+    void (*colorPixel)(int unifDim, const double unif[], int texNum,
+                       const texTexture *tex[], int varyDim, const double vary[],
+                       double rgbd[4]);
+    void (*transformVertex)(int unifDim, const double unif[], int attrDim,
+                            const double attr[], int varyDim, double vary[]);
 };
 
 
