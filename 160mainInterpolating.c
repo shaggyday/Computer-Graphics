@@ -2,7 +2,7 @@
 
 
 /* On macOS, compile with...
-    clang 150mainPerspective.c 000pixel.o -lglfw -framework OpenGL
+    clang 160mainInterpolating.c 000pixel.o -lglfw -framework OpenGL
 */
 
 #include <stdio.h>
@@ -13,16 +13,16 @@
 
 #include "000pixel.h"
 //#include "170engine.h"
-//#include "120vector.c"
-//#include "140matrix.c"
-//#include "040texture.c"
-//#include "130shading.c"
-//#include "130depth.c"
-//#include "130triangle.c"
-//#include "160mesh.c"
-//#include "140isometry.c"
-//#include "150camera.c"
-//#include "140landscape.c"
+#include "000pixel.h"
+#include "120vector.c"
+#include "140matrix.c"
+#include "140isometry.c"
+#include "150camera.c"
+#include "040texture.c"
+#include "130shading.c"
+#include "130depth.c"
+#include "130triangle.c"
+#include "160mesh.c"
 
 #define mainSCREENSIZE 512
 
@@ -68,14 +68,13 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 		const double attr[], int varyDim, double vary[]) {
 	double attrHom[4] = {attr[0], attr[1], attr[2], 1.0};
 	double worldHom[4], varyHom[4];
-	/* The modeling transformation is just Z-translation. So this code is much 
-	simpler than the usual matrix multiplication. */
-	vecCopy(4, attrHom, worldHom);
-	worldHom[2] += unif[mainUNIFMODELING];
+//	worldHom[2] += unif[mainUNIFMODELING];
+    mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHom, worldHom);
 	mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), worldHom, varyHom);
 	vecCopy(4, varyHom, vary);
-	vary[mainVARYS] = attr[mainATTRS] * vary[mainVARYW];
-	vary[mainVARYT] = attr[mainATTRT] * vary[mainVARYW];
+	printf("%f\n",vary[mainVARYW]);
+	vary[mainVARYS] = attr[mainATTRS];// * vary[mainVARYW];
+	vary[mainVARYT] = attr[mainATTRT];// * vary[mainVARYW];
 }
 
 /*** Globals ***/
@@ -84,17 +83,15 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 depthBuffer buf;
 shaShading sha;
 texTexture texture;
+isoIsometry iso;
 camCamera cam;
 const texTexture *textures[1] = {&texture};
 const texTexture **tex = textures;
 
-/* Camera control. */
-double translationVector[3] = {256.0, 256.0, 256.0};
-double cameraTarget[3] = {0.0, 0.0, 0.0};
-double cameraRho = 256.0, cameraPhi = M_PI / 4.0, cameraTheta = 0.0;
 /* Meshes to be rendered. */
 meshMesh mesh1;
 meshMesh mesh2;
+
 double unif[3 + 32] = {1.0, 1.0, 1.0,
 					   1.0, 0.0, 0.0, 0.0,
 					   0.0, 1.0, 0.0, 0.0,
@@ -104,17 +101,30 @@ double unif[3 + 32] = {1.0, 1.0, 1.0,
 					   0.0, 1.0, 0.0, 0.0,
 					   0.0, 0.0, 1.0, 0.0,
 					   0.0, 0.0, 0.0, 1.0,};
+/* Camera control. */
+double cameraTarget[3] = {0.0, 0.0, 0.0};
+double cameraRho = 256.0, cameraPhi = M_PI / 4.0, cameraTheta = 0.0;
+
+/* Modeling */
+double translationVector[3] = {256.0, 256.0, 256.0};
+double rotationAngle = 0.0;
 
 /*** User interface ***/
 
 void render(void) {
-	double view[4][4], projInvIsom[4][4];//, viewProjInvIsom[4][4];
+	double view[4][4], projInvIsom[4][4];
 	camGetProjectionInverseIsometry(&cam, projInvIsom);
 	mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
-//	mat444Multiply(view, projInvIsom, viewProjInvIsom);
+    double rot[3][3], isom[4][4], rotationAxis[3];;
+    vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
+    mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
+    isoSetRotation(&iso,rot);
+    isoGetHomogeneous(&iso,isom);
+    vecCopy(16, (double *)isom, &unif[mainUNIFMODELING]);
+    vecCopy(16, (double *)projInvIsom, &unif[mainUNIFCAMERA]);
+
 	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&buf, 1000000000.0);
-	vecCopy(16, (double *)projInvIsom, &unif[mainUNIFCAMERA]);
 	meshRender(&mesh1, &buf, view, &sha, unif, tex);
 	meshRender(&mesh2, &buf, view, &sha, unif, tex);
 }
@@ -166,6 +176,7 @@ void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 void handleTimeStep(double oldTime, double newTime) {
 	if (floor(newTime) - floor(oldTime) >= 1.0)
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
+//    rotationAngle += (newTime - oldTime);
 	render();
 }
 

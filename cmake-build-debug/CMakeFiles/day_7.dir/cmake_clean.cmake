@@ -1,5 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/day_7.dir/150mainPerspective.c.o"
+  "CMakeFiles/day_7.dir/140mainCamera.c.o"
   "day_7.pdb"
   "day_7"
 )

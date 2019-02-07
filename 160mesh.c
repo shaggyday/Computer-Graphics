@@ -644,8 +644,8 @@ void clipVertex(int varyDim, double a[], double b[], double clippedVary[]){
 void viewportNHomoDivide(const double viewport[4][4],int varyDim,double vary[]){
     double temp[varyDim];
     mat441Multiply(viewport,vary,temp);
-    vecScale(varyDim-2,1 / temp[varyDim-2], temp, vary);
-    vary[varyDim-2] = 1/vary[varyDim-2];
+    vecScale(3,1 / temp[3], temp, vary);
+    vary[3] = 1/vary[3];
 }
 
 /*** Rendering ***/

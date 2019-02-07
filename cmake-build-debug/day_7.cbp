@@ -87,7 +87,7 @@
 		<Unit filename="/Accounts/tianh/Downloads/ComputerGraphics/Day13/000pixel.o">
 			<Option target="day_7"/>
 		</Unit>
-		<Unit filename="/Accounts/tianh/Downloads/ComputerGraphics/Day13/150mainPerspective.c">
+		<Unit filename="/Accounts/tianh/Downloads/ComputerGraphics/Day13/140mainCamera.c">
 			<Option target="day_7"/>
 		</Unit>
 		<Unit filename="/Accounts/tianh/Downloads/ComputerGraphics/Day13/CMakeLists.txt">

@@ -10,6 +10,8 @@
 #include <math.h>
 #include <GLFW/glfw3.h>
 
+#define mainSCREENSIZE 512
+
 #include "000pixel.h"
 #include "120vector.c"
 #include "140matrix.c"
@@ -32,8 +34,9 @@
 #define mainVARYX 0
 #define mainVARYY 1
 #define mainVARYZ 2
-#define mainVARYS 3
-#define mainVARYT 4
+#define mainVARYW 3
+#define mainVARYS 4
+#define mainVARYT 5
 #define mainUNIFR 0
 #define mainUNIFG 1
 #define mainUNIFB 2
@@ -64,8 +67,8 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 //	vecPrint(varyDim,vary);
 //	fflush(stdout);
     mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), varyHomog, vary);
-	vary[mainVARYS] = attr[mainATTRS];
-	vary[mainVARYT] = attr[mainATTRT];
+	vary[mainVARYS] = attr[mainATTRS] * vary[mainVARYW];
+	vary[mainVARYT] = attr[mainATTRT] * vary[mainVARYW];
 }
 
 shaShading sha;
@@ -90,65 +93,65 @@ double unif[3 + 32] = {1.0, 1.0, 1.0,
 double rotationAngle = 0.0;
 double rotationAxis[3];
 double translationVector[3] = {256.0, 256.0, 256.0};
-double rho = 0;
-double phi = 0;
+double rho = 256.0;
+double phi = M_PI / 4.0;
 double theta = 0;
 double target[3] = {256.0, 256.0, 256.0};
 
 void draw(void) {
-	depthClearDepths(&depth,1000000000000);
+    double view[4][4], projInvIsom[4][4];
+    camGetProjectionInverseIsometry(&cam, projInvIsom);
+    mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
+    vecCopy(16, (double *)projInvIsom, &unif[mainUNIFCAMERA]);
+    depthClearDepths(&depth,1000000000000);
 	pixClearRGB(0.0, 0.0, 0.0);
-	meshRender(&mesh1, &depth, &sha, unif, tex);
-	meshRender(&mesh2, &depth, &sha, unif, tex);
+	meshRender(&mesh1, &depth, view, &sha, unif, tex);
+	meshRender(&mesh2, &depth, view, &sha, unif, tex);
 }
 
 void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
 		int altOptionIsDown, int superCommandIsDown) {
-	if (key == GLFW_KEY_ENTER) {
-		if (texture.filtering == texLINEAR)
-			texSetFiltering(&texture, texNEAREST);
-		else
-			texSetFiltering(&texture, texLINEAR);
-		draw();
-	}
-	else {
-		if (key == GLFW_KEY_W)
-			 phi-= M_PI / 10;
-		if (key == GLFW_KEY_S)
-			phi += M_PI / 10;
-		if (key == GLFW_KEY_A)
-			theta -= M_PI / 10;
-		if (key == GLFW_KEY_D)
-			theta += M_PI / 10;
-		camLookAt(&cam, target, rho, phi, theta);
-		double invIsom[4][4];
-		isoGetInverseHomogeneous(&cam.isometry,invIsom);
-		vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
-		draw();
-	}
+    if (key == GLFW_KEY_ENTER) {
+        if (texture.filtering == texLINEAR)
+            texSetFiltering(&texture, texNEAREST);
+        else
+            texSetFiltering(&texture, texLINEAR);
+        draw();
+    } else {
+        if (key == GLFW_KEY_W)
+            phi -= M_PI / 10;
+        if (key == GLFW_KEY_S)
+            phi += M_PI / 10;
+        if (key == GLFW_KEY_A)
+            theta -= M_PI / 10;
+        if (key == GLFW_KEY_D)
+            theta += M_PI / 10;
+        camSetFrustum(&cam, M_PI / 6.0, rho, 10.0, mainSCREENSIZE,
+                      mainSCREENSIZE);
+        camLookAt(&cam, target, rho, phi, phi);
+    }
 }
 
 void handleTimeStep(double oldTime, double newTime) {
 	if (floor(newTime) - floor(oldTime) >= 1.0)
 		printf("handleTimeStep: %f frames/sec\n", 1.0 / (newTime - oldTime));
-	unif[mainUNIFR] = sin(newTime);
-	unif[mainUNIFG] = cos(oldTime);
-//	rotationAngle += (newTime - oldTime);
+//	unif[mainUNIFR] = sin(newTime);
+//	unif[mainUNIFG] = cos(oldTime);
+	rotationAngle += (newTime - oldTime);
 	double rot[3][3], isom[4][4];
 	vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
 	mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
     isoSetRotation(&iso,rot);
     isoGetHomogeneous(&iso,isom);
-//	mat44Isometry(rot, translationVector, isom);
 	vecCopy(16, (double *)isom, &unif[mainUNIFMODELING]);
 
 //	phi = rotationAngle;
 //	rho -= 1;
 //	theta = rho;
-    camLookAt(&cam, target, rho, phi, theta);
-    double invIsom[4][4];
-    isoGetInverseHomogeneous(&cam.isometry,invIsom);
-    vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
+//    camLookAt(&cam, target, rho, phi, theta);
+//    double invIsom[4][4];
+//    isoGetInverseHomogeneous(&cam.isometry,invIsom);
+//    vecCopy(16, (double *)invIsom, &unif[mainUNIFCAMERA]);
 	draw();
 }
 
@@ -175,6 +178,10 @@ int main(void) {
 		sha.transformVertex = transformVertex;
 		sha.texNum = 1;
         isoSetTranslation(&iso,translationVector);
+        camSetProjectionType(&cam, camORTHOGRAPHIC);
+        camSetFrustum(&cam, M_PI / 6.0, rho, 10.0, mainSCREENSIZE,
+                      mainSCREENSIZE);
+        camLookAt(&cam, target, rho, phi, theta);
 		draw();
 		pixSetKeyUpHandler(handleKeyUp);
 		pixSetTimeStepHandler(handleTimeStep);
