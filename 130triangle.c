@@ -92,9 +92,6 @@ void triRender(const shaShading *sha, depthBuffer *buf, const double unif[],
     if(prepareInterpolate(sha->varyDim,MInv,aPrime,bPrime,cPrime,bMinusA,cMinusA)!=0){
         return;
     }
-//            vecPrint(sha->varyDim,aPrime);
-//            vecPrint(sha->varyDim,bPrime);
-//            vecPrint(sha->varyDim,cPrime);
 
     //Actually looping and interpolating
     double rgbd[4];

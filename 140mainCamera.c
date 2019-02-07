@@ -61,11 +61,7 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 		const double attr[], int varyDim, double vary[]) {
 	double attrHomog[4] = {attr[0], attr[1], attr[2], 1.0};
 	double varyHomog[4];
-//	vecPrint(attrDim,attr);
-//	fflush(stdout);
 	mat441Multiply((double(*)[4])(&unif[mainUNIFMODELING]), attrHomog, varyHomog);
-//	vecPrint(varyDim,vary);
-//	fflush(stdout);
     mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), varyHomog, vary);
 	vary[mainVARYS] = attr[mainATTRS] * vary[mainVARYW];
 	vary[mainVARYT] = attr[mainATTRT] * vary[mainVARYW];
@@ -173,7 +169,7 @@ int main(void) {
 		texSetTopBottom(&texture, texREPEAT);
 		sha.unifDim = 3 + 32;
 		sha.attrDim = 3 + 2 + 3;
-		sha.varyDim = 3 + 2;
+		sha.varyDim = 4 + 2;
 		sha.colorPixel = colorPixel;
 		sha.transformVertex = transformVertex;
 		sha.texNum = 1;

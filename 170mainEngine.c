@@ -1,4 +1,7 @@
-
+/* 1. There should be 8 vertices in a box
+ * 2. the vectors formed by XYZ attributes are perpendicular to vectors formed by NOP
+ * 3. The relationship would not change
+ */
 
 
 /* On macOS, compile with...
