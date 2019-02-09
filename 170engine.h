@@ -13,6 +13,10 @@ void vecCopy(int dim, const double v[], double copy[]);
 input. */
 void vecAdd(int dim, const double v[], const double w[], double vPlusW[]);
 
+/* Adds the dim-dimensional vectors v,w and u. The output can safely alias the
+input. */
+void vecAdd3(int dim, const double v[], const double w[], const double u[], double vPlusW[]);
+
 /* Subtracts the dim-dimensional vectors v and w. The output can safely alias 
 the input. */
 void vecSubtract(int dim, const double v[], const double w[], 

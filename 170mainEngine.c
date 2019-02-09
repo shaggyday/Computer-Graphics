@@ -66,7 +66,7 @@ void colorPixel(int unifDim, const double unif[], int texNum,
 	rgbd[0] = sample[mainTEXR] * unif[mainUNIFR];
 	rgbd[1] = sample[mainTEXG] * unif[mainUNIFG];
 	rgbd[2] = sample[mainTEXB] * unif[mainUNIFB];
-	rgbd[3] = -vary[mainVARYZ];
+	rgbd[3] = vary[mainVARYZ];
 }
 
 void transformVertex(int unifDim, const double unif[], int attrDim, 
@@ -118,7 +118,7 @@ void render(void) {
 	double view[4][4], projInvIsom[4][4];
 	camGetProjectionInverseIsometry(&cam, projInvIsom);
 	mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
-    double rot[3][3], isom[4][4], rotationAxis[3];;
+    double rot[3][3], isom[4][4], rotationAxis[3];
     vec3Set(1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0), rotationAxis);
     mat33AngleAxisRotation(rotationAngle, rotationAxis, rot);
     isoSetRotation(&iso,rot);

@@ -28,6 +28,8 @@
 #define mainVARYZ 2
 #define mainVARYW 3
 #define mainVARYWORLDZ 4
+#define mainVARYS 5
+#define mainVARYT 6
 #define mainVARYN 5
 #define mainVARYO 6
 #define mainVARYP 7
@@ -42,6 +44,9 @@
 #define mainUNIFcLIGHT 23
 #define mainUNIFdLIGHT 26
 #define mainuNIFdCamera 29
+#define mainTEXR 0
+#define mainTEXG 1
+#define mainTEXB 2
 
 /* Solid colors, tinted from dark (low saturation at low elevation) to light 
 (high saturation at high elevation). */
@@ -54,6 +59,16 @@ void colorPixel(int unifDim, const double unif[], int texNum,
     cDiffuse[mainUNIFR] = unif[mainUNIFR] * (frac + 1.0) / 2.0;
     cDiffuse[mainUNIFG] = unif[mainUNIFG] * (frac + 1.0) / 2.0;
     cDiffuse[mainUNIFB] = unif[mainUNIFB] * (frac + 1.0) / 2.0;
+//    if (tex != NULL){
+//        /* Texture stuff */
+//        double sample[tex[0]->texelDim], thisTex[2];
+//        thisTex[0] = vary[mainVARYS] / vary[mainVARYW];
+//        thisTex[1] = vary[mainVARYT] / vary[mainVARYW];
+//        texSample(tex[0], thisTex[0], thisTex[1], sample);
+//        cDiffuse[mainUNIFR] *= sample[mainTEXR];// * unif[mainUNIFR];
+//        cDiffuse[mainUNIFG] *= sample[mainTEXG];// * unif[mainUNIFG];
+//        cDiffuse[mainUNIFB] *= sample[mainTEXB];// * unif[mainUNIFB];
+//    }
     /* Lambertian diffuse reflection */
     vecMultiply(3,cDiffuse,&unif[mainUNIFcLIGHT],rgbd);
     double dNormal[3] = {vary[mainVARYN],vary[mainVARYO],vary[mainVARYP]};
@@ -256,7 +271,7 @@ int main(void) {
         /* Continue configuring scene. */
         sha.unifDim = 3 + 1 + 3 + 16 + 3 + 3 + 3;
         sha.attrDim = 3 + 2 + 3;
-        sha.varyDim = 4 + 1 + 2;
+        sha.varyDim = 4 + 1 + 2 + 3;
         sha.colorPixel = colorPixel;
         sha.transformVertex = transformVertex;
         sha.texNum = 0;

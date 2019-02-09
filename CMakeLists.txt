@@ -11,6 +11,6 @@ find_package(OpenGL REQUIRED)
 
 include_directories(. ${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 
-add_executable(day_7 180mainDiffuse.cz 000pixel.o 170engine.o)
+add_executable(day_7 200mainAmbient.c 000pixel.o 170engine.o)
 
 target_link_libraries(day_7 ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} m)

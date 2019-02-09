@@ -2,9 +2,9 @@
 
 
 /* On macOS, compile with...
-    clang 150mainPerspective.c 000pixel.o -lglfw -framework OpenGL
+    clang 190mainSpecular.c 000pixel.o 170engine.o -lglfw -framework OpenGL
 */
-
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -13,16 +13,6 @@
 
 #include "000pixel.h"
 #include "170engine.h"
-//#include "120vector.c"
-//#include "140matrix.c"
-//#include "040texture.c"
-//#include "130shading.c"
-//#include "130depth.c"
-//#include "130triangle.c"
-//#include "160mesh.c"
-//#include "140isometry.c"
-//#include "150camera.c"
-//#include "140landscape.c"
 
 #define mainSCREENSIZE 512
 
@@ -41,6 +31,11 @@
 #define mainVARYZ 2
 #define mainVARYW 3
 #define mainVARYWORLDZ 4
+#define mainVARYS 5
+#define mainVARYT 6
+#define mainVARYN 5
+#define mainVARYO 6
+#define mainVARYP 7
 #define mainUNIFR 0
 #define mainUNIFG 1
 #define mainUNIFB 2
@@ -49,31 +44,84 @@
 #define mainUNIFMEAN 5
 #define mainUNIFMAX 6
 #define mainUNIFCAMERA 7
+#define mainUNIFcLIGHT 23
+#define mainUNIFdLIGHT 26
+#define mainUNIFdCamera 29
+#define mainUNIFcSPECULAR 32
+#define mainUNIFSHININESS 33
+#define mainUNIFAMBIENT 36
+#define mainTEXR 0
+#define mainTEXG 1
+#define mainTEXB 2
 
-/* Solid colors, tinted from dark (low saturation at low elevation) to light 
+/* Solid colors, tinted from dark (low saturation at low elevation) to light
 (high saturation at high elevation). */
-void colorPixel(int unifDim, const double unif[], int texNum, 
-		const texTexture *tex[], int varyDim, const double vary[], 
-		double rgbd[4]) {
+void colorPixel(int unifDim, const double unif[], int texNum,
+				const texTexture *tex[], int varyDim, const double vary[],
+				double rgbd[4]) {
+	/* Configuring cDiffuse */
+	double cDiffuse[3];
 	double frac = (vary[mainVARYWORLDZ] - unif[mainUNIFMIN])
-		/ (unif[mainUNIFMAX] - unif[mainUNIFMIN]);
-	rgbd[0] = unif[mainUNIFR] * (frac + 1.0) / 2.0;
-	rgbd[1] = unif[mainUNIFG] * (frac + 1.0) / 2.0;
-	rgbd[2] = unif[mainUNIFB] * (frac + 1.0) / 2.0;
+				  / (unif[mainUNIFMAX] - unif[mainUNIFMIN]);
+	cDiffuse[mainUNIFR] = unif[mainUNIFR] * (frac + 1.0) / 2.0;
+	cDiffuse[mainUNIFG] = unif[mainUNIFG] * (frac + 1.0) / 2.0;
+	cDiffuse[mainUNIFB] = unif[mainUNIFB] * (frac + 1.0) / 2.0;
+//    if (tex != NULL){
+//        /* Texture stuff */
+//        double sample[tex[0]->texelDim], thisTex[2];
+//        thisTex[0] = vary[mainVARYS] / vary[mainVARYW];
+//        thisTex[1] = vary[mainVARYT] / vary[mainVARYW];
+//        texSample(tex[0], thisTex[0], thisTex[1], sample);
+//        cDiffuse[mainUNIFR] *= sample[mainTEXR];// * unif[mainUNIFR];
+//        cDiffuse[mainUNIFG] *= sample[mainTEXG];// * unif[mainUNIFG];
+//        cDiffuse[mainUNIFB] *= sample[mainTEXB];// * unif[mainUNIFB];
+//    }
+	/* Lambertian diffuse reflection */
+	double diffuse[3];
+	vecMultiply(3, cDiffuse, &unif[mainUNIFcLIGHT], diffuse);
+	double dNormal[3] = {vary[mainVARYN], vary[mainVARYO], vary[mainVARYP]};
+	double dNormalUnit[3];
+	vecUnit(3, dNormal, dNormalUnit);
+	double iDIFF = vecDot(3, dNormalUnit, &unif[mainUNIFdLIGHT]);
+	if (iDIFF < 0.0)
+		iDIFF = 0.0;
+	vecScale(3, iDIFF, diffuse, diffuse);
+	/* Specular reflection */
+	double dReflect[3], temp[3], specular[3] = {0,0,0};
+	double scalar = 2 * vecDot(3, &unif[mainUNIFdLIGHT], dNormalUnit);
+	vecScale(3, scalar, dNormalUnit, temp);
+	vecSubtract(3, temp, &unif[mainUNIFdLIGHT], dReflect);
+	double iSPEC = vecDot(3, dReflect, &unif[mainUNIFdCamera]);
+	if (iDIFF == 0.0 || iSPEC < 0.0)
+		iSPEC = 0.0;
+	iSPEC = pow(iSPEC, unif[mainUNIFSHININESS]);
+	vecMultiply(3, &unif[mainUNIFcSPECULAR], &unif[mainUNIFcLIGHT], specular);
+	vecScale(3, iSPEC, specular, specular);
+	/* Ambient reflection */
+    double ambient[3];
+    vecMultiply(3, cDiffuse, &unif[mainUNIFAMBIENT], ambient);
+	/* Adding things up */
+	vecAdd3(3, diffuse, specular, ambient, rgbd);
 	rgbd[3] = vary[mainVARYZ];
 }
 
-void transformVertex(int unifDim, const double unif[], int attrDim, 
-		const double attr[], int varyDim, double vary[]) {
-	double attrHom[4] = {attr[0], attr[1], attr[2], 1.0};
-	double worldHom[4], varyHom[4];
-	/* The modeling transformation is just Z-translation. So this code is much 
+void transformVertex(int unifDim, const double unif[], int attrDim,
+					 const double attr[], int varyDim, double vary[]) {
+	double attrHom[4] = {attr[mainATTRX], attr[mainATTRY], attr[mainATTRZ], 1.0};
+	double worldHom[4], varyHom[4], varyNormalHom[4];
+	/* The modeling transformation is just Z-translation. So this code is much
 	simpler than the usual matrix multiplication. */
 	vecCopy(4, attrHom, worldHom);
 	worldHom[2] += unif[mainUNIFMODELING];
 	mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), worldHom, varyHom);
 	vecCopy(4, varyHom, vary);
-	vary[mainVARYWORLDZ] = worldHom[2];
+	vary[mainVARYWORLDZ] = worldHom[mainATTRZ];
+	/* Rotating but not translating normal vector varyings */
+	double normalHom[4] = {attr[mainATTRN],attr[mainATTRO],attr[mainATTRP],0.0};
+	mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), normalHom, varyNormalHom);
+	vary[mainVARYN] = varyNormalHom[0];
+	vary[mainVARYO] = varyNormalHom[1];
+	vary[mainATTRP] = varyNormalHom[2];
 }
 
 /*** Globals ***/
@@ -81,46 +129,86 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
 /* Crucial infrastructure. */
 depthBuffer buf;
 shaShading sha;
+texTexture texture;
 camCamera cam;
+const texTexture *textures[1] = {&texture};
+const texTexture **tex = textures;
 /* Camera control. */
 double cameraTarget[3] = {0.0, 0.0, 0.0};
 double cameraRho = 256.0, cameraPhi = M_PI / 4.0, cameraTheta = 0.0;
 /* Meshes to be rendered. */
 meshMesh grass;
-double unifGrass[3 + 1 + 3 + 16] = {
-	0.0, 1.0, 0.0,
-	0.0,
-	0.0, 0.0, 0.0,
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0};
+double unifGrass[3 + 1 + 3 + 16 + 3 + 3 + 3 + 3 + 1 + 3] = {
+		0.0, 1.0, 0.0,
+		0.0,
+		0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0,
+		0.0, 0.0, 0.0};
 meshMesh rock;
-double unifRock[3 + 1 + 3 + 16] = {
-	1.0, 1.0, 1.0,
-	0.0,
-	0.0, 0.0, 0.0,
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0};
+double unifRock[3 + 1 + 3 + 16 + 3 + 3 + 3 + 3 + 1 + 3] = {
+		1.0, 1.0, 1.0,
+		0.0,
+		0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+        1.0,
+        0.0, 0.0, 0.0};
 meshMesh water;
-double unifWater[3 + 1 + 3 + 16] = {
-	0.0, 0.0, 1.0,
-	0.0,
-	0.0, 0.0, 0.0,
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0};
+double unifWater[3 + 1 + 3 + 16 + 3 + 3 + 3 + 3 + 1 + 3] = {
+		0.0, 0.0, 1.0,
+		0.0,
+		0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+        1.0,
+        0.0, 0.0, 0.0};
+meshMesh sphere;
+double unifSphere[3 + 1 + 3 + 16 + 3 + 3 + 3 + 3 + 1 + 3] = {
+		1.0, 1.0, 1.0,
+		0.0,
+		0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0,
+        1.0,
+        1.0, 1.0, 1.0};
+/* Lighting */
+double dLight[3] = {256.0, 256.0, 512.0};
+/* Modeling */
+isoIsometry isoSphere;
+double translationVector[3] = {256.0, 256.0, 150.0};
 
 /*** User interface ***/
 
 void render(void) {
-	double view[4][4], projInvIsom[4][4];//, viewProjInvIsom[4][4];
+	double view[4][4], projInvIsom[4][4];
 	camGetProjectionInverseIsometry(&cam, projInvIsom);
 	mat44Viewport(mainSCREENSIZE, mainSCREENSIZE, view);
-//	mat444Multiply(view, projInvIsom, viewProjInvIsom);
 	pixClearRGB(0.0, 0.0, 0.0);
 	depthClearDepths(&buf, 1000000000.0);
 	vecCopy(16, (double *)projInvIsom, &unifGrass[mainUNIFCAMERA]);
@@ -129,10 +217,15 @@ void render(void) {
 	meshRender(&rock, &buf, view, &sha, unifRock, NULL);
 	vecCopy(16, (double *)projInvIsom, &unifWater[mainUNIFCAMERA]);
 	meshRender(&water, &buf, view, &sha, unifWater, NULL);
+//	double isom[4][4];
+//    isoGetHomogeneous(&isoSphere,isom);
+//    vecCopy(16, (double *)isom, &unifSphere[mainUNIFMODELING]);
+//    vecCopy(16, (double *)projInvIsom, &unifSphere[mainUNIFCAMERA]);
+//    meshRender(&sphere, &buf, view, &sha, unifSphere, tex);
 }
 
-void handleKeyAny(int key, int shiftIsDown, int controlIsDown, 
-		int altOptionIsDown, int superCommandIsDown) {
+void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
+				  int altOptionIsDown, int superCommandIsDown) {
 	if (key == GLFW_KEY_A)
 		cameraTheta -= M_PI / 100;
 	else if (key == GLFW_KEY_D)
@@ -145,29 +238,29 @@ void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
 		cameraRho *= 0.9;
 	else if (key == GLFW_KEY_E)
 		cameraRho *= 1.1;
-	else if (key == GLFW_KEY_K)
+	else if (key == GLFW_KEY_Z)
 		cameraTarget[0] -= 5;
-	else if (key == GLFW_KEY_SEMICOLON)
+	else if (key == GLFW_KEY_C)
 		cameraTarget[0] += 5;
-	else if (key == GLFW_KEY_L)
-		cameraTarget[1] -= 0.5;
+	else if (key == GLFW_KEY_RIGHT)
+		cameraTarget[1] -= 1;
+	else if (key == GLFW_KEY_LEFT)
+		cameraTarget[1] += 1;
+	else if (key == GLFW_KEY_UP)
+		cameraTarget[2] -= 1;
+	else if (key == GLFW_KEY_DOWN)
+		cameraTarget[2] += 1;
 	else if (key == GLFW_KEY_O)
-		cameraTarget[1] += 0.5;
-	else if (key == GLFW_KEY_I)
-		cameraTarget[2] -= 0.5;
-	else if (key == GLFW_KEY_P)
-		cameraTarget[2] += 0.5;
-	else if (key == GLFW_KEY_J)
 		unifWater[mainUNIFMODELING] -= 0.1;
-	else if (key == GLFW_KEY_U)
+	else if (key == GLFW_KEY_P)
 		unifWater[mainUNIFMODELING] += 0.1;
-	camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE, 
-		mainSCREENSIZE);
+	camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE,
+				  mainSCREENSIZE);
 	camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
 }
 
 void handleKeyUp(int key, int shiftIsDown, int controlIsDown,
-				  int altOptionIsDown, int superCommandIsDown) {
+				 int altOptionIsDown, int superCommandIsDown) {
 	if (key == GLFW_KEY_ENTER) {
 		if (cam.projectionType == camORTHOGRAPHIC)
 			camSetProjectionType(&cam, camPERSPECTIVE);
@@ -198,8 +291,8 @@ int main(void) {
 		landFault(landNum, landNum, (double *)landData, 1.5 - i * 0.04);
 	for (i = 0; i < 4; i += 1)
 		landBlur(landNum, landNum, (double *)landData);
-	landStatistics(landNum, landNum, (double *)landData, &landMin, &landMean, 
-		&landMax);
+	landStatistics(landNum, landNum, (double *)landData, &landMin, &landMean,
+				   &landMax);
 	double waterData[4] = {landMin, landMin, landMin, landMin};
 	unifGrass[mainUNIFMIN] = landMin;
 	unifGrass[mainUNIFMEAN] = landMean;
@@ -210,38 +303,51 @@ int main(void) {
 	unifWater[mainUNIFMIN] = landMin;
 	unifWater[mainUNIFMEAN] = landMean;
 	unifWater[mainUNIFMAX] = landMax;
+	double dLightUnit[3];
+	vecUnit(3, dLight, dLightUnit);
+	vecCopy(3, dLightUnit, &unifGrass[mainUNIFdLIGHT]);
+	vecCopy(3, dLightUnit, &unifRock[mainUNIFdLIGHT]);
+	vecCopy(3, dLightUnit, &unifWater[mainUNIFdLIGHT]);
 	meshMesh land;
 	/* Begin configuring scene. */
 	if (pixInitialize(mainSCREENSIZE, mainSCREENSIZE, "Pixel Graphics") != 0)
 		return 1;
 	else if (depthInitialize(&buf, mainSCREENSIZE, mainSCREENSIZE) != 0)
 		return 2;
-	else if (meshInitializeLandscape(&land, landNum, landNum, 1.0, 
-			(double *)landData) != 0)
+	else if (meshInitializeLandscape(&land, landNum, landNum, 1.0,
+									 (double *)landData) != 0)
 		return 3;
-	else if (meshInitializeDissectedLandscape(&grass, &land, M_PI / 4.0, 
-			1) != 0)
+	else if (meshInitializeDissectedLandscape(&grass, &land, M_PI / 4.0,
+											  1) != 0)
 		return 4;
-	else if (meshInitializeDissectedLandscape(&rock, &land, M_PI / 4.0, 
-			0) != 0)
+	else if (meshInitializeDissectedLandscape(&rock, &land, M_PI / 4.0,
+											  0) != 0)
 		return 5;
-	else if (meshInitializeLandscape(&water, 2, 2, landNum - 1.0, 
-			(double *)waterData) != 0)
+	else if (meshInitializeLandscape(&water, 2, 2, landNum - 1.0,
+									 (double *)waterData) != 0)
 		return 6;
+	else if (texInitializeFile(&texture, "../26710550-idyllic-seamless-grass-texture.jpg") != 0)
+		return 7;
+	else if (meshInitializeSphere(&sphere, 16.0, 16, 32) != 0)
+		return 8;
 	else {
+		texSetFiltering(&texture, texNEAREST);
+		texSetLeftRight(&texture, texREPEAT);
+		texSetTopBottom(&texture, texREPEAT);
 		meshDestroy(&land);
 		/* Continue configuring scene. */
-		sha.unifDim = 3 + 1 + 3 + 16;
+		sha.unifDim = 3 + 1 + 3 + 16 + 3 + 3 + 3 + 3 + 1 + 3;
 		sha.attrDim = 3 + 2 + 3;
-		sha.varyDim = 4 + 1;
+		sha.varyDim = 4 + 1 + 2 + 3;
 		sha.colorPixel = colorPixel;
 		sha.transformVertex = transformVertex;
 		sha.texNum = 0;
 		camSetProjectionType(&cam, camORTHOGRAPHIC);
-		camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE, 
-			mainSCREENSIZE);
-		vec3Set(landNum / 2.0, landNum / 2.0, 
-			landData[landNum / 2][landNum / 2], cameraTarget);
+		camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE,
+					  mainSCREENSIZE);
+		isoSetTranslation(&isoSphere,translationVector);
+		vec3Set(landNum / 2.0, landNum / 2.0,
+				landData[landNum / 2][landNum / 2], cameraTarget);
 		camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
 		render();
 		/* User interface. */
@@ -255,6 +361,8 @@ int main(void) {
 		meshDestroy(&grass);
 		meshDestroy(&rock);
 		meshDestroy(&water);
+		meshDestroy(&sphere);
+		texDestroy(&texture);
 		depthDestroy(&buf);
 		return 0;
 	}
