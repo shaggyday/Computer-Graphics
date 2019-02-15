@@ -28,12 +28,11 @@
 #define mainVARYY 1
 #define mainVARYZ 2
 #define mainVARYW 3
-#define mainVARYWORLDZ 4
-#define mainVARYS 5
-#define mainVARYT 6
-#define mainVARYN 7
-#define mainVARYO 8
-#define mainVARYP 9
+#define mainVARYS 4
+#define mainVARYT 5
+#define mainVARYN 6
+#define mainVARYO 7
+#define mainVARYP 8
 #define mainUNIFR 0
 #define mainUNIFG 1
 #define mainUNIFB 2
@@ -54,12 +53,10 @@
 void colorPixel(int unifDim, const double unif[], int texNum,
                 const texTexture *tex[], int varyDim, const double vary[],
                 double rgbd[4]) {
-    double frac = (vary[mainVARYWORLDZ] - unif[mainUNIFMIN])
-                  / (unif[mainUNIFMAX] - unif[mainUNIFMIN]);
     double cDiffuse[3];
-    cDiffuse[mainUNIFR] = unif[mainUNIFR] * (frac + 1.0) / 2.0;
-    cDiffuse[mainUNIFG] = unif[mainUNIFG] * (frac + 1.0) / 2.0;
-    cDiffuse[mainUNIFB] = unif[mainUNIFB] * (frac + 1.0) / 2.0;
+    cDiffuse[mainUNIFR] = unif[mainUNIFR];
+    cDiffuse[mainUNIFG] = unif[mainUNIFG];
+    cDiffuse[mainUNIFB] = unif[mainUNIFB];
     /* Texture stuff */
     if (tex != NULL){
         double sample[tex[0]->texelDim], thisTex[2] = {vary[mainVARYS],vary[mainVARYT]};
@@ -91,16 +88,12 @@ void transformVertex(int unifDim, const double unif[], int attrDim,
     worldHom[2] += unif[mainUNIFMODELING];
     mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), worldHom, varyHom);
     vecCopy(4, varyHom, vary);
-    vary[mainVARYWORLDZ] = worldHom[mainATTRZ];
-    /* Rotating but not translating normal vector varyings */
-    double normalHom[4] = {attr[mainATTRN],attr[mainATTRO],attr[mainATTRP],0.0};
-    mat441Multiply((double(*)[4])(&unif[mainUNIFCAMERA]), normalHom, varyNormalHom);
     /* Copying stuff */
     vary[mainVARYS] = attr[mainATTRS];
     vary[mainVARYT] = attr[mainATTRT];
-    vary[mainVARYN] = varyNormalHom[0];
-    vary[mainVARYO] = varyNormalHom[1];
-    vary[mainATTRP] = varyNormalHom[2];
+    vary[mainVARYN] = attr[mainATTRN];
+    vary[mainVARYO] = attr[mainATTRO];
+    vary[mainATTRP] = attr[mainATTRP];
 }
 
 /*** Globals ***/
@@ -125,8 +118,8 @@ double unifGrass[3 + 1 + 3 + 16 + 3 + 3 + 3] = {
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0,
+        0.6, 0.6, 0.6,
         1.0, 1.0, 1.0,
-        0.0, 0.0, 0.0,
         0.0, 0.0, 0.0};
 meshMesh rock;
 double unifRock[3 + 1 + 3 + 16 + 3 + 3 + 3] = {
@@ -137,8 +130,8 @@ double unifRock[3 + 1 + 3 + 16 + 3 + 3 + 3] = {
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0,
+        0.6, 0.6, 0.6,
         1.0, 1.0, 1.0,
-        0.0, 0.0, 0.0,
         0.0, 0.0, 0.0};
 meshMesh water;
 double unifWater[3 + 1 + 3 + 16 + 3 + 3 + 3] = {
@@ -149,10 +142,10 @@ double unifWater[3 + 1 + 3 + 16 + 3 + 3 + 3] = {
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0,
+        0.6, 0.6, 0.6,
         1.0, 1.0, 1.0,
-        0.0, 0.0, 0.0,
         0.0, 0.0, 0.0};
-double dLight[3] = {512.0, 512.0, 512.0};
+double dLight[3] = {1.0, 1.0, 1.0};
 
 /*** User interface ***/
 
@@ -278,7 +271,7 @@ int main(void) {
         /* Continue configuring scene. */
         sha.unifDim = 3 + 1 + 3 + 16 + 3 + 3 + 3;
         sha.attrDim = 3 + 2 + 3;
-        sha.varyDim = 4 + 1 + 2 + 3;
+        sha.varyDim = 4 + 2 + 3;
         sha.colorPixel = colorPixel;
         sha.transformVertex = transformVertex;
         sha.texNum = 0;
