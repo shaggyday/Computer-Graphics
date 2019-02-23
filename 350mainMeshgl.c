@@ -1,5 +1,5 @@
 /* On macOS, compile with...
-    clang 340mainLighting.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
+    clang 350mainMeshgl.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
 */
 
 #include <stdio.h>
@@ -14,6 +14,8 @@
 #include "320matrix.c"
 #include "320isometry.c"
 #include "320camera.c"
+#include "310mesh.c"
+#include "350meshgl.c"
 
 #define BUFFER_OFFSET(bytes) ((GLubyte*) NULL + (bytes))
 
@@ -42,8 +44,9 @@ const GLchar **unifNames = uniformNames;
 const GLchar *attributeNames[2] = {"position", "color"};
 const GLchar **attrNames = attributeNames;
 double angle = 0.0;
-GLuint octaBuffers[2];
-GLuint octaVAO;
+
+meshMesh sphere;
+meshglMesh sphereGL;
 isoIsometry modeling;
 camCamera cam;
 
@@ -64,41 +67,17 @@ void handleResize(GLFWwindow *window, int width, int height) {
 }
 
 void initializeMesh(void) {
-    double attributes[VERTNUM * ATTRDIM] = {
-            1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-            -1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
-            0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-            0.0, -1.0, 0.0, 0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-            0.0, 0.0, -1.0, 1.0, 0.0, 1.0};
-    GLuint triangles[TRINUM * 3] = {
-            0, 2, 4,
-            2, 1, 4,
-            1, 3, 4,
-            3, 0, 4,
-            2, 0, 5,
-            1, 2, 5,
-            3, 1, 5,
-            0, 3, 5};
-    glGenBuffers(2, octaBuffers);
-    glBindBuffer(GL_ARRAY_BUFFER, octaBuffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, VERTNUM * ATTRDIM * sizeof(double),
-                 (GLvoid *)attributes, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, octaBuffers[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, TRINUM * 3 * sizeof(GLuint),
-                 (GLvoid *)triangles, GL_STATIC_DRAW);
+    meshInitializeSphere(&sphere, 1.0, 32, 32);
+    meshglInitialize(&sphereGL, &sphere);
+    meshDestroy(&sphere);
     /* VAO stuff */
-    glGenVertexArrays(1, &octaVAO);
-    glBindVertexArray(octaVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, octaBuffers[0]);
     glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
     glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
                           ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(0));
     glEnableVertexAttribArray(sha.attrLocs[ATTRCOLOR]);
     glVertexAttribPointer(sha.attrLocs[ATTRCOLOR], 3, GL_DOUBLE, GL_FALSE,
                           ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, octaBuffers[1]);
-    glBindVertexArray(0);
+    meshglFinishInitialization(&sphereGL);
 }
 
 /* Returns 0 on success, non-zero on failure. */
@@ -201,10 +180,14 @@ void render(double oldTime, double newTime) {
     uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
     uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
     uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    /* VAO stuff */
-    glBindVertexArray(octaVAO);
-    glDrawElements(GL_TRIANGLES, TRINUM * 3, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
-    glBindVertexArray(0);
+
+    /* Binding and rendering using meshGL */
+//    glBindBuffer(GL_ARRAY_BUFFER, boxGL.buffers[0]);
+//    glVertexPointer(3, GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+//    glNormalPointer(GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+//    glColorPointer(3, GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble),
+//                   BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    meshglRender(&sphereGL);
 }
 
 int main(void) {
@@ -269,9 +252,7 @@ int main(void) {
         glfwPollEvents();
     }
     shaDestroy(&sha);
-    /* Delete not just the buffers, but also the vertex array object. */
-    glDeleteBuffers(2, octaBuffers);
-    glDeleteVertexArrays(1, &octaVAO);
+    meshglDestroy(&sphereGL);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
