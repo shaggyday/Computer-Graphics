@@ -24,11 +24,8 @@ GLint positionLoc, colorLoc;
 GLint viewingLoc, modelingLoc;
 GLint cLightLoc, pLightLoc, cAmbientLoc, pCameraLoc;
 
-#define TRINUM 8
-#define VERTNUM 6
-#define ATTRDIM 6
 #define UNIFNUM 6
-#define ATTRNUM 2
+#define ATTRNUM 3
 #define UNIFVIEWING 0
 #define UNIFMODELING 1
 #define UNIFcLIGHT 2
@@ -37,11 +34,12 @@ GLint cLightLoc, pLightLoc, cAmbientLoc, pCameraLoc;
 #define UNIFpCAMERA 5
 #define ATTRPOSITION 0
 #define ATTRCOLOR 1
+#define ATTRNORMAL 2
 
 shaShading sha;
-const GLchar *uniformNames[6] = {"viewing", "modeling", "cLight", "pLight", "cAmbient", "pCamera"};
+const GLchar *uniformNames[UNIFNUM] = {"viewing", "modeling", "cLight", "pLight", "cAmbient", "pCamera"};
 const GLchar **unifNames = uniformNames;
-const GLchar *attributeNames[2] = {"position", "color"};
+const GLchar *attributeNames[ATTRNUM] = {"position", "color", "normal"};
 const GLchar **attrNames = attributeNames;
 double angle = 0.0;
 
@@ -73,10 +71,13 @@ void initializeMesh(void) {
     /* VAO stuff */
     glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
     glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
-                          ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(0));
+                          sphereGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
     glEnableVertexAttribArray(sha.attrLocs[ATTRCOLOR]);
     glVertexAttribPointer(sha.attrLocs[ATTRCOLOR], 3, GL_DOUBLE, GL_FALSE,
-                          ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+                          sphereGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    glEnableVertexAttribArray(sha.attrLocs[ATTRNORMAL]);
+    glVertexAttribPointer(sha.attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
+                          sphereGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
     meshglFinishInitialization(&sphereGL);
 }
 
@@ -89,13 +90,14 @@ int initializeShaderProgram(void) {
 		uniform mat4 modeling;\
 		in vec3 position;\
 		in vec3 color;\
+        in vec3 normal;\
 		out vec4 rgba;\
 		out vec3 dNormal;\
 		out vec3 pFragment;\
 		void main() {\
 			gl_Position = viewing * modeling * vec4(position, 1.0);\
 			rgba = vec4(color, 1.0);\
-			dNormal = position;\
+			dNormal = vec3(modeling * vec4(normal, 0.0));\
             vec4 world = modeling * vec4(position, 1.0);\
 			pFragment = vec3(world);\
 		}";
@@ -180,7 +182,6 @@ void render(double oldTime, double newTime) {
     uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
     uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
     uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-
     /* Binding and rendering using meshGL */
 //    glBindBuffer(GL_ARRAY_BUFFER, boxGL.buffers[0]);
 //    glVertexPointer(3, GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));

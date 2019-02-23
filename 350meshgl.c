@@ -27,7 +27,7 @@ void meshglInitialize(meshglMesh *mesh, const meshMesh *base) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->triNum * 3 * sizeof(GLuint),
 		(GLvoid *)base->tri, GL_STATIC_DRAW);
 	/* VAO stuff */
-    glGenVertexArrays(1, mesh->VAO);
+    glGenVertexArrays(1, &mesh->VAO);
     glBindVertexArray(mesh->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[0]);
 }
@@ -51,15 +51,15 @@ void meshglFinishInitialization(meshglMesh *mesh) {
 	glColorPointer(3, GL_DOUBLE, mesh->attrDim * sizeof(GLdouble), 
 		meshglBUFFEROFFSET(3 * sizeof(GLdouble))); */
 void meshglRender(const meshglMesh *mesh) {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->buffers[1]);
+    glBindVertexArray(mesh->VAO);
     glDrawElements(GL_TRIANGLES, mesh->triNum * 3, GL_UNSIGNED_INT, meshglBUFFEROFFSET(0));
-
+    glBindVertexArray(0);
 }
 
 /* Releases the resources backing the mesh. Invoke this function when you are 
 done using the mesh. */
 void meshglDestroy(meshglMesh *mesh) {
-    glDeleteVertexArrays(1, mesh->VAO);
+    glDeleteVertexArrays(1, &mesh->VAO);
     glDeleteBuffers(2, mesh->buffers);
 
 }

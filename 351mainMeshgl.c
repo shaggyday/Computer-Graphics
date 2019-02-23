@@ -1,5 +1,7 @@
-//Shiyue ZHANG
-//clang 351mainMeshgl.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
+/* On macOS, compile with...
+    clang 351mainMeshgl.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -17,33 +19,35 @@
 
 #define BUFFER_OFFSET(bytes) ((GLubyte*) NULL + (bytes))
 
+GLuint program;
+GLint positionLoc, colorLoc;
+GLint viewingLoc, modelingLoc;
+GLint cLightLoc, pLightLoc, cAmbientLoc, pCameraLoc;
 
-//#define TRINUM 8
-//#define VERTNUM 6
-//#define ATTRDIM 6
+#define ATTRDIM 100 // cool shit
 #define UNIFNUM 6
 #define ATTRNUM 3
 #define UNIFVIEWING 0
 #define UNIFMODELING 1
-#define UNIFCLIGHT 2
-#define UNIFPLIGHT 3
-#define UNIFCAMB 4
-#define UNIFPCAM 5
-#define ATTRCOLOR 1
+#define UNIFcLIGHT 2
+#define UNIFpLIGHT 3
+#define UNIFcAMBIENT 4
+#define UNIFpCAMERA 5
 #define ATTRPOSITION 0
+#define ATTRCOLOR 1
 #define ATTRNORMAL 2
 
 shaShading sha;
-const GLchar *uniformNames[UNIFNUM] = {"viewing", "modeling", "cLight", "pLight","cAmbient","pCamera"};
+const GLchar *uniformNames[UNIFNUM] = {"viewing", "modeling", "cLight", "pLight", "cAmbient", "pCamera"};
 const GLchar **unifNames = uniformNames;
-const GLchar *attributeNames[ATTRNUM] = {"position", "color","normal"};
+const GLchar *attributeNames[ATTRNUM] = {"position", "color", "normal"};
 const GLchar **attrNames = attributeNames;
-GLdouble angle = 0.0;
+double angle = 0.0;
+
+meshMesh sphere;
+meshglMesh sphereGL;
 isoIsometry modeling;
 camCamera cam;
-meshglMesh meshgl;
-meshMesh mesh;
-
 
 double getTime(void) {
     struct timeval tv;
@@ -62,19 +66,20 @@ void handleResize(GLFWwindow *window, int width, int height) {
 }
 
 void initializeMesh(void) {
-    meshInitializeCapsule(&mesh, 0.6, 1.5, 50, 50);
-    meshglInitialize(&meshgl, &mesh);
-    meshDestroy(&mesh);
+    meshInitializeSphere(&sphere, 1.0, 32, 32);
+    meshglInitialize(&sphereGL, &sphere);
+    meshDestroy(&sphere);
+    /* VAO stuff */
     glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
     glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
-                          meshgl.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+                          ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(0));
     glEnableVertexAttribArray(sha.attrLocs[ATTRCOLOR]);
     glVertexAttribPointer(sha.attrLocs[ATTRCOLOR], 3, GL_DOUBLE, GL_FALSE,
-                          meshgl.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+                          ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
     glEnableVertexAttribArray(sha.attrLocs[ATTRNORMAL]);
     glVertexAttribPointer(sha.attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
-                          meshgl.attrDim * sizeof(GLdouble), BUFFER_OFFSET(5 * sizeof(GLdouble)));
-    meshglFinishInitialization(&meshgl);
+                          ATTRDIM * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    meshglFinishInitialization(&sphereGL);
 }
 
 /* Returns 0 on success, non-zero on failure. */
@@ -88,44 +93,44 @@ int initializeShaderProgram(void) {
 		in vec3 color;\
         in vec3 normal;\
 		out vec4 rgba;\
-        out vec3 dNormal;\
-        out vec3 pFragment;\
+		out vec3 dNormal;\
+		out vec3 pFragment;\
 		void main() {\
-			vec4 world = modeling * vec4(position, 1.0);\
-            pFragment = vec3(world);\
-            gl_Position = viewing * modeling * vec4(position, 1.0);\
-            dNormal = vec3(modeling * vec4(normal, 0.0));\
+			gl_Position = viewing * modeling * vec4(position, 1.0);\
 			rgba = vec4(color, 1.0);\
+			dNormal = vec3(modeling * vec4(normal, 0.0));\
+            vec4 world = modeling * vec4(position, 1.0);\
+			pFragment = vec3(world);\
 		}";
     GLchar fragmentCode[] = "\
-        #version 140\n\
+		#version 140\n\
+		uniform vec3 cLight;\
+		uniform vec3 pLight;\
+		uniform vec3 cAmbient;\
+	    uniform vec3 pCamera;\
 		in vec4 rgba;\
-        uniform vec3 pLight;\
-        uniform vec3 cLight;\
-        uniform vec3 cAmbient;\
-        uniform vec3 pCamera;\
-        in vec3 dNormal;\
+		in vec3 dNormal;\
         in vec3 pFragment;\
         out vec4 fragColor;\
 		void main() {\
-        vec3 dCamera = normalize(pCamera - pFragment);\
-        vec3 dNorm = normalize(dNormal);\
-        vec3 dLight = normalize(pLight - pFragment);\
-        float iDiff = dot(dLight, dNorm);\
-        if (iDiff < 0.0)\
-            iDiff = 0.0;\
-        vec3 cDiff = rgba.xyz;\
-        vec3 diffuse = iDiff * cDiff * cLight;\
-        vec3 dReft = 2.0 * iDiff * dNorm - dLight;\
-        vec3 cSpec = vec3(1.0, 1.0, 1.0);\
-        float iSpec = dot(dCamera ,dReft);\
-        float shininess = 20.0;\
-        if (iSpec < 0.0 || iDiff == 0.0)\
-            iSpec = 0.0;\
-        iSpec = pow(iSpec, shininess);\
-        vec3 Spec = rgba.xyz + iSpec * cSpec * cLight;\
-        vec3 ambient = Spec + Spec * cAmbient;\
-        fragColor = vec4(ambient, rgba.w);\
+            vec3 dNorm = normalize(dNormal);\
+            vec3 dCamera = normalize(pCamera - pFragment);\
+            vec3 dLight = normalize(pLight - pFragment);\
+			float iDiff = dot(dLight, dNorm);\
+			if (iDiff < 0.0)\
+				iDiff = 0.0;\
+			vec3 cDiff = rgba.xyz;\
+			vec3 diffuse = iDiff * cDiff * cLight;\
+            vec3 dRefl = 2.0 * iDiff * dNorm - dLight;\
+            float iSpec = dot(dRefl, dCamera);\
+            if (iSpec < 0.0 || iDiff == 0.0)\
+                iSpec = 0.0;\
+            float shininess = 20.0;\
+            iSpec = pow(iSpec, shininess);\
+            vec3 cSpec = vec3(1.0, 1.0, 1.0);\
+            vec3 specular = iSpec * cSpec * cLight;\
+			vec3 ambient = cDiff * cAmbient;\
+			fragColor = vec4(diffuse + specular + ambient, rgba.w);\
 		}";
     return shaInitialize(&sha, vertexCode, fragmentCode, UNIFNUM, unifNames, ATTRNUM, attrNames);
 }
@@ -157,7 +162,7 @@ void render(double oldTime, double newTime) {
     /* Send our own modeling transformation M to the shaders. */
     GLdouble trans[3] = {0.0, 0.0, 0.0};
     isoSetTranslation(&modeling, trans);
-    angle += 0.3 * (newTime - oldTime);
+    angle += 0.1 * (newTime - oldTime);
     GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
     GLdouble rot[3][3];
     mat33AngleAxisRotation(angle, axis, rot);
@@ -167,17 +172,24 @@ void render(double oldTime, double newTime) {
     uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
     /* Send our own viewing transformation P C^-1 to the shaders. */
     GLdouble viewing[4][4];
-    GLdouble cLight[3] = {1.0,1.0,1.0};
-    GLdouble pLight[3] = {300.0,250.0,200.0};
-    GLdouble cAmbient[3] = {0.0,0.1,0.1};
-    //GLdouble pCamera[3] = {0.0, 0.0, 0.0};
-    uniformVector3(cLight, sha.unifLocs[UNIFCLIGHT]);
-    uniformVector3(pLight, sha.unifLocs[UNIFPLIGHT]);
-    uniformVector3(cAmbient, sha.unifLocs[UNIFCAMB]);
-    uniformVector3(cam.isometry.translation, sha.unifLocs[UNIFPCAM]);
     camGetProjectionInverseIsometry(&cam, viewing);
     uniformMatrix44(viewing, sha.unifLocs[UNIFVIEWING]);
-    meshglRender(&meshgl);
+    /* Send light color and light direction to the shaders. */
+    GLdouble cLIGHT[3] = {1.0, 1.0, 1.0};
+    GLdouble pLIGHT[3] = {1.0, 1.0, 1.0};
+    GLdouble cAMBIENT[3] = {1.0, 1.0, 1.0};
+    GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
+    uniformVector3(cLIGHT, sha.unifLocs[UNIFcLIGHT]);
+    uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
+    uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
+    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
+    /* Binding and rendering using meshGL */
+//    glBindBuffer(GL_ARRAY_BUFFER, boxGL.buffers[0]);
+//    glVertexPointer(3, GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+//    glNormalPointer(GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+//    glColorPointer(3, GL_DOUBLE, boxGL.attrDim * sizeof(GLdouble),
+//                   BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    meshglRender(&sphereGL);
 }
 
 int main(void) {
@@ -194,7 +206,7 @@ int main(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     GLFWwindow *window;
-    window = glfwCreateWindow(768, 512, "Learning OpenGL 2.0", NULL, NULL);
+    window = glfwCreateWindow(768, 512, "Learning OpenGL 3.2", NULL, NULL);
     if (window == NULL) {
         fprintf(stderr, "main: glfwCreateWindow failed.\n");
         glfwTerminate();
@@ -222,12 +234,13 @@ int main(void) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    /* Configure the camera once and for all. */
     double target[3] = {0.0, 0.0, 0.0};
     camLookAt(&cam, target, 5.0, M_PI / 3.0, -M_PI / 4.0);
     camSetProjectionType(&cam, camPERSPECTIVE);
     camSetFrustum(&cam, M_PI / 6.0, 5.0, 10.0, 768, 512);
-    /* The rest of the program is identical to the preceding tutorial. */
+    /* Initialize the shader program before the mesh, so that the shader
+    locations are already set up by the time the vertex array object is
+    initialized. */
     if (initializeShaderProgram() != 0)
         return 4;
     initializeMesh();
@@ -241,9 +254,8 @@ int main(void) {
         glfwPollEvents();
     }
     shaDestroy(&sha);
-    meshglDestroy(&meshgl);
+    meshglDestroy(&sphereGL);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
-
