@@ -17,6 +17,7 @@
 #include "360texture.c"
 #include "310mesh.c"
 #include "350meshgl.c"
+#include "140landscape.c"
 #include "370body.c"
 
 #define BUFFER_OFFSET(bytes) ((GLubyte*) NULL + (bytes))
@@ -35,7 +36,6 @@
 #define ATTRNORMAL 2
 
 double angle = 0.0;
-isoIsometry modeling;
 camCamera cam;
 
 double getTime(void) {
@@ -43,11 +43,9 @@ double getTime(void) {
     gettimeofday(&tv, NULL);
     return (double)tv.tv_sec + (double)tv.tv_usec * 0.000001;
 }
-
 void handleError(int error, const char *description) {
     fprintf(stderr, "handleError: %d\n%s\n", error, description);
 }
-
 void handleResize(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
     /* The documentation for camSetFrustum says that we must re-call it here. */
@@ -111,58 +109,48 @@ int initializeShading(void) {
 			vec3 ambient = cDiff * cAmbient;\
 			fragColor = vec4(diffuse + specular + ambient, 1.0);\
 		}";
+
     return shaInitialize(&sha, vertexCode, fragmentCode, UNIFNUM, unifNames, ATTRNUM, attrNames);
 }
 
-meshMesh capsule1;
-meshglMesh capsuleGL1;
-meshMesh sphere;
-meshglMesh sphereGL;
-meshMesh capsule2;
-meshglMesh capsuleGL2;
+void initializeMesh(meshglMesh *meshgl, meshMesh *mesh, shaShading *sha){
+    meshglInitialize(meshgl, mesh);
+    glEnableVertexAttribArray(sha->attrLocs[ATTRPOSITION]);
+    glVertexAttribPointer(sha->attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
+                          meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
+    glEnableVertexAttribArray(sha->attrLocs[ATTRTEXURECOORDS]);
+    glVertexAttribPointer(sha->attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
+                          meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    glEnableVertexAttribArray(sha->attrLocs[ATTRNORMAL]);
+    glVertexAttribPointer(sha->attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
+                          meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
+    meshglFinishInitialization(meshgl);
+}
+
+meshMesh trunk;
+meshglMesh trunkGL;
+meshMesh tree;
+meshglMesh treeGL;
+meshMesh landscape;
+meshglMesh landscapeGL;
+double landNum = 100;
+double landData[100][100];
 void initializeMeshes(void) {
     /* The capsule */
-    meshInitializeCapsule(&capsule1, 0.5, 2.0, 32, 32);
-    meshglInitialize(&capsuleGL1, &capsule1);
-    meshDestroy(&capsule1);
-    glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
-    glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL1.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRTEXURECOORDS]);
-    glVertexAttribPointer(sha.attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL1.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRNORMAL]);
-    glVertexAttribPointer(sha.attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL1.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    meshglFinishInitialization(&capsuleGL1);
+    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 10.0);
+    initializeMesh(&trunkGL, &trunk, &sha);
+    meshDestroy(&trunk);
     /* A really cool sphere */
-    meshInitializeSphere(&sphere,0.5, 32, 32);
-    meshglInitialize(&sphereGL, &sphere);
-    meshDestroy(&sphere);
-    glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
-    glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
-                          10 * sizeof(GLdouble), BUFFER_OFFSET(0));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRTEXURECOORDS]);
-    glVertexAttribPointer(sha.attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
-                          10 * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRNORMAL]);
-    glVertexAttribPointer(sha.attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
-                          10 * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    meshglFinishInitialization(&sphereGL);
-    /* The capsule */
-    meshInitializeCapsule(&capsule2, 0.3, 3.0, 32, 32);
-    meshglInitialize(&capsuleGL2, &capsule2);
-    meshDestroy(&capsule2);
-    glEnableVertexAttribArray(sha.attrLocs[ATTRPOSITION]);
-    glVertexAttribPointer(sha.attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL2.attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRTEXURECOORDS]);
-    glVertexAttribPointer(sha.attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL2.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    glEnableVertexAttribArray(sha.attrLocs[ATTRNORMAL]);
-    glVertexAttribPointer(sha.attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
-                          capsuleGL2.attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    meshglFinishInitialization(&capsuleGL2);
+    meshInitializeSphere(&tree, 5, 32, 32);
+    initializeMesh(&treeGL, &tree, &sha);
+    meshglFinishInitialization(&treeGL);
+    /* The landscape */
+    GLuint error = meshInitializeLandscape(&landscape, landNum, landNum, 1.0, (GLdouble *) landData);
+    if (error == 0) {
+        meshglInitialize(&landscapeGL,&landscape);
+        initializeMesh(&landscapeGL,&landscape, &sha);
+        meshDestroy(&landscape);
+    }
 }
 
 texTexture texture1;
@@ -171,55 +159,67 @@ texTexture **tex1 = textures1;
 texTexture texture2;
 texTexture *textures2[1] = {&texture2};
 texTexture **tex2 = textures2;
+texTexture texture3;
+texTexture *textures3[1] = {&texture3};
+texTexture **tex3 = textures3;
 char *path1 = "grass-background-28.jpg";
-char *path2 = "Noether_retusche_nachcoloriert.jpg";
+char *path2 = "water.jpg";
+char *path3 = "trunk.jpeg";
 int initializeTextures(texTexture *texture, char *path){
     return texInitializeFile(texture, path, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT);
 }
 
-bodyBody capsuleBody1;
-bodyBody sphereBody;
-bodyBody capsuleBody2;
+bodyBody landscapeBody;
+bodyBody trunkBody1;
+bodyBody trunkBody2;
+bodyBody treeBody1;
+bodyBody treeBody2;
 int initializeScene() {
-    if (initializeShading() != 0)
-        return 1;
+    int oh = 0;
+    /* General stuff */
+    oh += initializeShading();
     initializeMeshes();
-    for (int i = 0; i < 1; i += 1) {
-        if (initializeTextures(tex1[i], path1) != 0)
-            return 2;
-    }
-    for (int i = 0; i < 1; i += 1) {
-        if (initializeTextures(tex2[i], path2) != 0)
-            return 3;
-    }
-    if (bodyInitialize(&capsuleBody1, 10, 1) != 0)
-        return 4;
-    bodySetMesh(&capsuleBody1, &capsuleGL1);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&capsuleBody1, i, tex1[i]);
-    if (bodyInitialize(&sphereBody, 10, 1) != 0)
-        return 5;
-    bodySetMesh(&sphereBody, &sphereGL);
+        oh += initializeTextures(tex1[i], path1);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&sphereBody, i, tex2[i]);
-    if (bodyInitialize(&capsuleBody2, 10, 1) != 0)
-        return 6;
-    bodySetMesh(&capsuleBody2, &capsuleGL2);
+        oh += initializeTextures(tex2[i], path2);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&capsuleBody2, i, tex1[i]);
-    return 0;
+        oh += initializeTextures(tex3[i], path3);
+    /* bodies and their textures */
+    oh += bodyInitialize(&landscapeBody, 0, 1);
+    bodySetMesh(&landscapeBody, &landscapeGL);
+    for (int i = 0; i < 1; i += 1)
+        bodySetTexture(&landscapeBody, i, tex1[i]);
+    oh += bodyInitialize(&trunkBody1, 0, 1);
+    bodySetMesh(&trunkBody1, &trunkGL);
+    for (int i = 0; i < 1; i += 1)
+        bodySetTexture(&trunkBody1, i, tex3[i]);
+    oh += bodyInitialize(&trunkBody2, 0, 1);
+    bodySetMesh(&trunkBody2, &trunkGL);
+    for (int i = 0; i < 1; i += 1)
+        bodySetTexture(&trunkBody2, i, tex3[i]);
+    oh += bodyInitialize(&treeBody1, 0, 1);
+    bodySetMesh(&treeBody1, &treeGL);
+    for (int i = 0; i < 1; i += 1)
+        bodySetTexture(&treeBody1, i, tex1[i]);
+    oh += bodyInitialize(&treeBody2, 0, 1);
+    bodySetMesh(&treeBody2, &treeGL);
+    for (int i = 0; i < 1; i += 1)
+        bodySetTexture(&treeBody2, i, tex1[i]);
+    return oh;
 }
 
 void destroyScene(){
-    bodyDestroy(&capsuleBody1);
-    bodyDestroy(&sphereBody);
-    bodyDestroy(&capsuleBody2);
+    bodyDestroy(&trunkBody1);
+    bodyDestroy(&trunkBody2);
+    bodyDestroy(&treeBody1);
+    bodyDestroy(&treeBody2);
     shaDestroy(&sha);
     texDestroy(tex1[0]);
     texDestroy(tex2[0]);
-    meshglDestroy(&capsuleGL1);
-    meshglDestroy(&sphereGL);
-    meshglDestroy(&capsuleGL2);
+    meshglDestroy(&trunkGL);
+    meshglDestroy(&treeGL);
+    meshglDestroy(&landscapeGL);
 }
 
 void uniformMatrix44(GLdouble m[4][4], GLint uniformLocation) {
@@ -237,20 +237,40 @@ void uniformVector3(GLdouble v[3], GLint uniformLocation) {
     glUniform3fv(uniformLocation, 1, vFloat);
 }
 
+void renderBody(bodyBody *body){
+    GLdouble model[4][4];
+    isoGetHomogeneous(&body->isometry, model);
+    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
+    texRender(body->tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
+    meshglRender(body->mesh);
+    texUnrender(body->tex[0], GL_TEXTURE0);
+//    /* render trunks */
+//    isoGetHomogeneous(&trunkBody1.isometry, model);
+//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
+//    texRender(trunkBody1.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
+//    meshglRender(trunkBody1.mesh);
+//    texUnrender(trunkBody1.tex[0], GL_TEXTURE0);
+//    isoGetHomogeneous(&trunkBody2.isometry, model);
+//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
+//    texRender(trunkBody2.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
+//    meshglRender(trunkBody2.mesh);
+//    texUnrender(trunkBody2.tex[0], GL_TEXTURE0);
+//    /* render trees */
+//    isoGetHomogeneous(&treeBody1.isometry, model);
+//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
+//    texRender(treeBody1.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
+//    meshglRender(treeBody1.mesh);
+//    texUnrender(treeBody1.tex[0], GL_TEXTURE0);
+//    isoGetHomogeneous(&treeBody2.isometry, model);
+//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
+//    texRender(treeBody2.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
+//    meshglRender(treeBody2.mesh);
+//    texUnrender(treeBody2.tex[0], GL_TEXTURE0);
+}
+
 void render(double oldTime, double newTime) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(sha.program);
-    /* Send our own modeling transformation M to the shaders. */
-    GLdouble trans[3] = {0.0, 0.0, 0.0};
-    isoSetTranslation(&modeling, trans);
-    angle += 0.5 * (newTime - oldTime);
-    GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
-    GLdouble rot[3][3];
-    mat33AngleAxisRotation(angle, axis, rot);
-    isoSetRotation(&modeling, rot);
-    GLdouble model[4][4];
-    isoGetHomogeneous(&modeling, model);
-    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
     /* Send our own viewing transformation P C^-1 to the shaders. */
     GLdouble viewing[4][4];
     camGetProjectionInverseIsometry(&cam, viewing);
@@ -264,21 +284,45 @@ void render(double oldTime, double newTime) {
     uniformVector3(pLIGHT, sha.unifLocs[UNIFdLIGHT]);
     uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
     uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    /* render capsule */
-    texRender(capsuleBody1.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-    meshglRender(capsuleBody1.mesh);
-    texUnrender(capsuleBody1.tex[0], GL_TEXTURE0);
-    /* render sphere */
-    texRender(sphereBody.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-    meshglRender(sphereBody.mesh);
-    texUnrender(sphereBody.tex[0], GL_TEXTURE0);
-    /* render box */
-    texRender(capsuleBody2.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-    meshglRender(capsuleBody2.mesh);
-    texUnrender(capsuleBody2.tex[0], GL_TEXTURE0);
+    /* Same rotation for all bodies in scene */
+    GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
+    GLdouble rot[3][3];
+    mat33AngleAxisRotation(angle, axis, rot);
+    isoSetRotation(&landscapeBody.isometry, rot);
+    isoSetRotation(&trunkBody1.isometry, rot);
+    isoSetRotation(&trunkBody2.isometry, rot);
+    isoSetRotation(&treeBody1.isometry, rot);
+    isoSetRotation(&treeBody2.isometry, rot);
+    /* but different translations obviously */
+    GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
+    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
+    GLdouble transTrunk2[3] = {-30.0, -30.0, 5.0};
+    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
+    GLdouble transTree2[3] = {-30.0, -30.0, 15.0};
+    isoSetTranslation(&landscapeBody.isometry, transLandscape);
+    isoSetTranslation(&trunkBody1.isometry, transTrunk1);
+    isoSetTranslation(&trunkBody2.isometry, transTrunk2);
+    isoSetTranslation(&treeBody1.isometry, transTree1);
+    isoSetTranslation(&treeBody2.isometry, transTree2);
+    renderBody(&landscapeBody);
+    renderBody(&trunkBody1);
+    renderBody(&trunkBody2);
+    renderBody(&treeBody1);
+    renderBody(&treeBody2);
 }
 
 int main(void) {
+    /* landscape preparation */
+    double landMin, landMean, landMax;
+    time_t t;
+    srand((unsigned)time(&t));
+    landFlat(landNum, landNum, (double *)landData, 0.0);
+    for (int i = 0; i < 32; i += 1)
+        landFault(landNum, landNum, (double *)landData, 1.5 - i * 0.04);
+    for (int i = 0; i < 4; i += 1)
+        landBlur(landNum, landNum, (double *)landData);
+    landStatistics(landNum, landNum, (double *)landData, &landMin, &landMean,
+                   &landMax);
     double oldTime;
     double newTime = getTime();
     glfwSetErrorCallback(handleError);
@@ -321,9 +365,9 @@ int main(void) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     double target[3] = {0.0, 0.0, 0.0};
-    camLookAt(&cam, target, 5.0, M_PI / 3.0, -M_PI / 4.0);
+    camLookAt(&cam, target, 200.0, M_PI / 3.0, -M_PI / 4.0);
     camSetProjectionType(&cam, camPERSPECTIVE);
-    camSetFrustum(&cam, M_PI / 6.0, 5.0, 10.0, 768, 512);
+    camSetFrustum(&cam, M_PI / 6.0, 200.0, 10.0, 768, 512);
     /* Initialize the shader program before the mesh, so that the shader
     locations are already set up by the time the vertex array object is
     initialized. */
