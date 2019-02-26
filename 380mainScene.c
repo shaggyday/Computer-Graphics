@@ -137,11 +137,11 @@ double landNum = 100;
 double landData[100][100];
 void initializeMeshes(void) {
     /* The capsule */
-    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 10.0);
+    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 20.0);
     initializeMesh(&trunkGL, &trunk, &sha);
     meshDestroy(&trunk);
     /* A really cool sphere */
-    meshInitializeSphere(&tree, 5, 32, 32);
+    meshInitializeSphere(&tree, 4, 32, 32);
     initializeMesh(&treeGL, &tree, &sha);
     meshglFinishInitialization(&treeGL);
     /* The landscape */
@@ -201,11 +201,11 @@ int initializeScene() {
     oh += bodyInitialize(&treeBody1, 0, 1);
     bodySetMesh(&treeBody1, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody1, i, tex1[i]);
+        bodySetTexture(&treeBody1, i, tex2[i]);
     oh += bodyInitialize(&treeBody2, 0, 1);
     bodySetMesh(&treeBody2, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody2, i, tex1[i]);
+        bodySetTexture(&treeBody2, i, tex2[i]);
     return oh;
 }
 
@@ -244,28 +244,6 @@ void renderBody(bodyBody *body){
     texRender(body->tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
     meshglRender(body->mesh);
     texUnrender(body->tex[0], GL_TEXTURE0);
-//    /* render trunks */
-//    isoGetHomogeneous(&trunkBody1.isometry, model);
-//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
-//    texRender(trunkBody1.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-//    meshglRender(trunkBody1.mesh);
-//    texUnrender(trunkBody1.tex[0], GL_TEXTURE0);
-//    isoGetHomogeneous(&trunkBody2.isometry, model);
-//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
-//    texRender(trunkBody2.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-//    meshglRender(trunkBody2.mesh);
-//    texUnrender(trunkBody2.tex[0], GL_TEXTURE0);
-//    /* render trees */
-//    isoGetHomogeneous(&treeBody1.isometry, model);
-//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
-//    texRender(treeBody1.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-//    meshglRender(treeBody1.mesh);
-//    texUnrender(treeBody1.tex[0], GL_TEXTURE0);
-//    isoGetHomogeneous(&treeBody2.isometry, model);
-//    uniformMatrix44(model, sha.unifLocs[UNIFMODELING]);
-//    texRender(treeBody2.tex[0], GL_TEXTURE0, 0, sha.unifLocs[UNIFTEXTURE0]);
-//    meshglRender(treeBody2.mesh);
-//    texUnrender(treeBody2.tex[0], GL_TEXTURE0);
 }
 
 void render(double oldTime, double newTime) {
@@ -278,7 +256,7 @@ void render(double oldTime, double newTime) {
     /* Send light color and light direction to the shaders. */
     GLdouble cLIGHT[3] = {1.0, 1.0, 1.0};
     GLdouble pLIGHT[3] = {1.0, 1.0, 1.0};
-    GLdouble cAMBIENT[3] = {0.7, 0.7, 0.7};
+    GLdouble cAMBIENT[3] = {0.5, 0.5, 0.5};
     GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
     uniformVector3(cLIGHT, sha.unifLocs[UNIFcLIGHT]);
     uniformVector3(pLIGHT, sha.unifLocs[UNIFdLIGHT]);
@@ -295,10 +273,10 @@ void render(double oldTime, double newTime) {
     isoSetRotation(&treeBody2.isometry, rot);
     /* but different translations obviously */
     GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, -30.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, -30.0, 15.0};
+    GLdouble transTrunk1[3] = {0.0, 0.0, 5.0};
+    GLdouble transTrunk2[3] = {10.0, 20.0, 5.0};
+    GLdouble transTree1[3] = {0.0, 0.0, 25.0};
+    GLdouble transTree2[3] = {10.0, 20.0, 25.0};
     isoSetTranslation(&landscapeBody.isometry, transLandscape);
     isoSetTranslation(&trunkBody1.isometry, transTrunk1);
     isoSetTranslation(&trunkBody2.isometry, transTrunk2);
