@@ -25,7 +25,7 @@
 
 #define mainSCREENWIDTH 512
 #define mainSCREENHEIGHT 768
-#define UNIFNUM 10
+#define UNIFNUM 11
 #define ATTRNUM 3
 #define UNIFVIEWING 0
 #define UNIFMODELING 1
@@ -37,6 +37,7 @@
 #define UNIFcLIGHT2 7
 #define UNIFpLIGHT 8
 #define UNIFdSPOT 9
+#define UNIFCOSSPOTANGLE 10
 #define ATTRPOSITION 0
 #define ATTRTEXURECOORDS 1
 #define ATTRNORMAL 2
@@ -46,11 +47,15 @@ camCamera cam1;
 camCamera cam2;
 double cameraTarget[3] = {0.0, 0.0, 0.0};
 double cameraRho = 200.0;
-double shadowCameraRho = 50.0;
 double cameraPhi = M_PI / 3.0;
 double cameraTheta = -M_PI / 4.0;
+
+double shadowCameraTarget[3] = {0.0, 0.0, 5.0};
+double shadowCameraRho = 40.0;
 double shadowCameraPhi = M_PI / 2.0;
-double shadowCameraTheta = -M_PI / 2.0;
+double shadowCameraTheta = M_PI / 2.0;
+
+GLdouble spotLightAngle = M_PI / 6;
 
 double getTime(void) {
     struct timeval tv;
@@ -69,7 +74,7 @@ void handleResize(GLFWwindow *window, int width, int height) {
 
 shaShading sha;
 const GLchar *uniformNames[UNIFNUM] = {"viewing", "modeling", "cLight1", "dLight", "cAmbient",
-                                       "pCamera", "texture0", "cLight2", "pLight", "dSpot"};
+                                       "pCamera", "texture0", "cLight2", "pLight", "dSpot", "cosSpotAngle"};
 const GLchar **unifNames = uniformNames;
 const GLchar *attributeNames[ATTRNUM] = {"position", "textureCoords", "normal"};
 const GLchar **attrNames = attributeNames;
@@ -105,6 +110,7 @@ int initializeShading(void) {
 		uniform vec3 cLight2;\
         uniform vec3 pLight;\
         uniform vec3 dSpot;\
+        uniform vec3 cosSpotAngle;\
 		in vec3 dNormal;\
         in vec3 pFragment;\
         in vec2 textureST;\
@@ -131,7 +137,7 @@ int initializeShading(void) {
             vec3 specular2 = vec3(0.0, 0.0, 0.0);\
             vec3 dSpotLight = normalize(pLight - pFragment);\
             vec3 dSpotNormal = normalize(dSpot);\
-            if (dot(dSpotLight, dSpotNormal) >= 0.9659){\
+            if (dot(dSpotLight, dSpotNormal) >= cosSpotAngle.x){\
                 float iDiff2 = dot(dSpotLight, dNorm);\
                 if (iDiff2 < 0.0)\
                     iDiff2 = 0.0;\
@@ -175,7 +181,7 @@ double landNum = 100;
 double landData[100][100];
 void initializeMeshes(void) {
     /* The capsule */
-    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 10.0);
+    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 20.0);
     initializeMesh(&trunkGL, &trunk, &sha);
     meshDestroy(&trunk);
     /* A really cool sphere */
@@ -240,11 +246,11 @@ int initializeScene() {
     oh += bodyInitialize(&treeBody1, 0, 1);
     bodySetMesh(&treeBody1, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody1, i, tex1[i]);
+        bodySetTexture(&treeBody1, i, tex2[i]);
     oh += bodyInitialize(&treeBody2, 0, 1);
     bodySetMesh(&treeBody2, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody2, i, tex1[i]);
+        bodySetTexture(&treeBody2, i, tex2[i]);
     return oh;
 }
 
@@ -292,22 +298,6 @@ void renderRegularly(double oldTime, double newTime) {
     GLdouble viewing[4][4];
     camGetProjectionInverseIsometry(&cam1, viewing);
     uniformMatrix44(viewing, sha.unifLocs[UNIFVIEWING]);
-    /* Send light color and light direction to the shaders. */
-    GLdouble cLIGHT1[3] = {0.1, 0.1, 0.1};
-    GLdouble dLIGHT[3] = {1.0, 1.0, 1.0};
-    GLdouble cAMBIENT[3] = {0.7, 0.7, 0.7};
-    GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
-    GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
-    GLdouble pLIGHT[3] = {50, 50, 10.0};
-    GLdouble dSPOT[3] = {1.0, 1.0, 0.0};
-    uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
-    uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
-    uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
-    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    uniformVector3(cLIGHT2, sha.unifLocs[UNIFcLIGHT2]);
-    uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
-    uniformVector3(dSPOT, sha.unifLocs[UNIFdSPOT]);
     /* Same rotation for all bodies in scene */
     GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
     GLdouble rot[3][3];
@@ -319,15 +309,32 @@ void renderRegularly(double oldTime, double newTime) {
     isoSetRotation(&treeBody2.isometry, rot);
     /* but different translations obviously */
     GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, 0.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, 0.0, 15.0};
+    GLdouble transTrunk1[3] = {0.0, 0.0, 0.0};
+    GLdouble transTrunk2[3] = {20.0, 10.0, 0.0};
+    GLdouble transTree1[3] = {0.0, 0.0, 20.0};
+    GLdouble transTree2[3] = {20.0, 10.0, 20.0};
     isoSetTranslation(&landscapeBody.isometry, transLandscape);
     isoSetTranslation(&trunkBody1.isometry, transTrunk1);
     isoSetTranslation(&trunkBody2.isometry, transTrunk2);
     isoSetTranslation(&treeBody1.isometry, transTree1);
     isoSetTranslation(&treeBody2.isometry, transTree2);
+    /* Send light color and light direction to the shaders. */
+    GLdouble cLIGHT1[3] = {0.1, 0.1, 0.1};
+    GLdouble dLIGHT[3] = {1.0, 1.0, 1.0};
+    GLdouble cAMBIENT[3] = {0.5, 0.5, 0.5};
+    GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
+    GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
+    GLdouble pLIGHT[3] = {shadowCameraTarget[0], shadowCameraTarget[1] + shadowCameraRho, shadowCameraTarget[2]};
+    GLdouble dSPOT[3] = {pLIGHT[0], pLIGHT[1], 0.0};
+    GLdouble COSSPOTANGLE[3] = {cos(spotLightAngle / 2), 0.0, 0.0};
+    uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
+    uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
+    uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
+    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
+    uniformVector3(cLIGHT2, sha.unifLocs[UNIFcLIGHT2]);
+    uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
+    uniformVector3(dSPOT, sha.unifLocs[UNIFdSPOT]);
+    uniformVector3(COSSPOTANGLE, sha.unifLocs[UNIFCOSSPOTANGLE]);
     renderBody(&landscapeBody);
     renderBody(&trunkBody1);
     renderBody(&trunkBody2);
@@ -342,21 +349,6 @@ void renderShadowly(double oldtime, double newtime){
     GLdouble viewing[4][4];
     camGetProjectionInverseIsometry(&cam2, viewing);
     uniformMatrix44(viewing, sha.unifLocs[UNIFVIEWING]);
-    /* Send light color and light direction to the shaders. */
-    GLdouble cLIGHT1[3] = {0.1, 0.1, 0.1};
-    GLdouble dLIGHT[3] = {1.0, 1.0, 1.0};
-    GLdouble cAMBIENT[3] = {0.7, 0.7, 0.7};
-    GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
-    GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
-    GLdouble pLIGHT[3] = {cameraTarget[0] + shadowCameraRho, cameraTarget[1] + shadowCameraRho, 10.0};
-    GLdouble dSPOT[3] = {shadowCameraPhi, shadowCameraPhi, 0.0};
-    uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
-    uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
-    uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
-    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    uniformVector3(cLIGHT2, sha.unifLocs[UNIFcLIGHT2]);
-    uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
-    uniformVector3(dSPOT, sha.unifLocs[UNIFdSPOT]);
     /* Same rotation for all bodies in scene */
     GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
     GLdouble rot[3][3];
@@ -368,57 +360,38 @@ void renderShadowly(double oldtime, double newtime){
     isoSetRotation(&treeBody2.isometry, rot);
     /* but different translations obviously */
     GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, 0.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, 0.0, 15.0};
+    GLdouble transTrunk1[3] = {0.0, 0.0, 0.0};
+    GLdouble transTrunk2[3] = {20.0, 10.0, 0.0};
+    GLdouble transTree1[3] = {0.0, 0.0, 20.0};
+    GLdouble transTree2[3] = {20.0, 10.0, 20.0};
     isoSetTranslation(&landscapeBody.isometry, transLandscape);
     isoSetTranslation(&trunkBody1.isometry, transTrunk1);
     isoSetTranslation(&trunkBody2.isometry, transTrunk2);
     isoSetTranslation(&treeBody1.isometry, transTree1);
     isoSetTranslation(&treeBody2.isometry, transTree2);
+    /* Send light color and light direction to the shaders. */
+    GLdouble cLIGHT1[3] = {0.1, 0.1, 0.1};
+    GLdouble dLIGHT[3] = {1.0, 1.0, 1.0};
+    GLdouble cAMBIENT[3] = {0.5, 0.5, 0.5};
+    GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
+    GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
+    GLdouble pLIGHT[3] = {shadowCameraTarget[0], shadowCameraTarget[1] + shadowCameraRho, shadowCameraTarget[2]};
+    GLdouble dSPOT[3] = {pLIGHT[0], pLIGHT[1], 0.0};
+    GLdouble COSSPOTANGLE[3] = {cos(spotLightAngle / 2), 0.0, 0.0};
+    uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
+    uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
+    uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
+    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
+    uniformVector3(cLIGHT2, sha.unifLocs[UNIFcLIGHT2]);
+    uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
+    uniformVector3(dSPOT, sha.unifLocs[UNIFdSPOT]);
+    uniformVector3(COSSPOTANGLE, sha.unifLocs[UNIFCOSSPOTANGLE]);
     renderBody(&landscapeBody);
     renderBody(&trunkBody1);
     renderBody(&trunkBody2);
     renderBody(&treeBody1);
     renderBody(&treeBody2);
-
 }
-
-//void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
-//                  int altOptionIsDown, int superCommandIsDown) {
-//    if (key == GLFW_KEY_A)
-//        cameraTheta -= M_PI / 50;
-//    else if (key == GLFW_KEY_D)
-//        cameraTheta += M_PI / 50;
-//    else if (key == GLFW_KEY_W)
-//        cameraPhi -= M_PI / 50;
-//    else if (key == GLFW_KEY_S)
-//        cameraPhi += M_PI / 50;
-//    else if (key == GLFW_KEY_Q)
-//        cameraRho *= 0.9;
-//    else if (key == GLFW_KEY_E)
-//        cameraRho *= 1.1;
-//    else if (key == GLFW_KEY_Z)
-//        cameraTarget[0] -= 5;
-//    else if (key == GLFW_KEY_C)
-//        cameraTarget[0] += 5;
-//    else if (key == GLFW_KEY_RIGHT)
-//        cameraTarget[1] -= 1;
-//    else if (key == GLFW_KEY_LEFT)
-//        cameraTarget[1] += 1;
-//    else if (key == GLFW_KEY_UP)
-//        cameraTarget[2] -= 1;
-//    else if (key == GLFW_KEY_DOWN)
-//        cameraTarget[2] += 1;
-//    else if (key == GLFW_KEY_O)
-//        unifWater[mainUNIFMODELING] -= 0.1;
-//    else if (key == GLFW_KEY_P)
-//        unifWater[mainUNIFMODELING] += 0.1;
-//    camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE,
-//                  mainSCREENSIZE);
-//    camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
-//}
 
 int main(void) {
     /* landscape preparation */
@@ -476,9 +449,9 @@ int main(void) {
     camLookAt(&cam1, cameraTarget, cameraRho, cameraPhi, cameraTheta);
     camSetProjectionType(&cam1, camPERSPECTIVE);
     camSetFrustum(&cam1, M_PI / 6.0, cameraRho, 10.0, mainSCREENHEIGHT, mainSCREENWIDTH);
-    camLookAt(&cam2, cameraTarget, shadowCameraRho, shadowCameraPhi, shadowCameraTheta);
+    camLookAt(&cam2, shadowCameraTarget, shadowCameraRho, shadowCameraPhi, shadowCameraTheta);
     camSetProjectionType(&cam2, camPERSPECTIVE);
-    camSetFrustum(&cam2, M_PI / 12.0, shadowCameraRho, 10.0, mainSCREENWIDTH, mainSCREENWIDTH);
+    camSetFrustum(&cam2, M_PI / 6.0, shadowCameraRho, 10.0, mainSCREENWIDTH, mainSCREENWIDTH);
     /* Initialize the shader program before the mesh, so that the shader
     locations are already set up by the time the vertex array object is
     initialized. */
@@ -489,9 +462,6 @@ int main(void) {
         newTime = getTime();
         if (floor(newTime) - floor(oldTime) >= 1.0)
             printf("main: %f frames/sec\n", 1.0 / (newTime - oldTime));
-//        pixSetKeyDownHandler(handleKeyAny);
-//        pixSetKeyRepeatHandler(handleKeyAny);
-//        pixSetKeyUpHandler(handleKeyAny);
         renderShadowly(oldTime, newTime);
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -1,5 +1,5 @@
 /* On macOS, compile with...
-    clang 400mainShadow.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
+    clang 410mainShadow.c /usr/local/gl3w/src/gl3w.o -lglfw -framework OpenGL -framework CoreFoundation -Wno-deprecated
 */
 
 #include <stdio.h>
@@ -25,9 +25,8 @@
 
 #define mainSCREENWIDTH 512
 #define mainSCREENHEIGHT 768
-#define SHADOWUNIFNUM 3
-#define SHADOWATTRNUM 1
-#define UNIFNUM 10
+
+#define UNIFNUM 11
 #define ATTRNUM 3
 #define UNIFVIEWING 0
 #define UNIFMODELING 1
@@ -39,21 +38,33 @@
 #define UNIFcLIGHT2 7
 #define UNIFpLIGHT 8
 #define UNIFdSPOT 9
-#define SHADOWUNIFCOLOR 2
+#define UNIFCOSSPOTANGLE 10
+#define UNIFVIEWINGS 11
 #define ATTRPOSITION 0
 #define ATTRTEXURECOORDS 1
 #define ATTRNORMAL 2
+
+#define SHADOWUNIFNUM 3
+#define SHADOWATTRNUM 1
+#define SHADOWUNIFVIEWING 0
+#define SHADOWUNIFMODELING 1
+#define SHADOWUNIFCOLOR 2
+#define SHADOWATTRPOSITION 0
 
 double angle = 0.0;
 camCamera cam1;
 camCamera cam2;
 double cameraTarget[3] = {0.0, 0.0, 0.0};
 double cameraRho = 200.0;
-double shadowCameraRho = 50.0;
 double cameraPhi = M_PI / 3.0;
 double cameraTheta = -M_PI / 4.0;
+
+double shadowCameraTarget[3] = {0.0, 0.0, 5.0};
+double shadowCameraRho = 40.0;
 double shadowCameraPhi = M_PI / 2.0;
-double shadowCameraTheta = -M_PI / 2.0;
+double shadowCameraTheta = M_PI / 2.0;
+
+GLdouble spotLightAngle = M_PI / 6;
 
 double getTime(void) {
     struct timeval tv;
@@ -71,12 +82,13 @@ void handleResize(GLFWwindow *window, int width, int height) {
 }
 
 shaShading sha;
-shaShading shadowSha;
 const GLchar *uniformNames[UNIFNUM] = {"viewing", "modeling", "cLight1", "dLight", "cAmbient",
-                                       "pCamera", "texture0", "cLight2", "pLight", "dSpot"};
+                                       "pCamera", "texture0", "cLight2", "pLight", "dSpot",
+                                       "cosSpotAngle"};//, "viewingS"};
 const GLchar **unifNames = uniformNames;
 const GLchar *attributeNames[ATTRNUM] = {"position", "textureCoords", "normal"};
 const GLchar **attrNames = attributeNames;
+shaShading shadowSha;
 const GLchar *shadowUniformNames[SHADOWUNIFNUM] = {"viewing", "modeling", "color"};
 const GLchar **shadowUnifNames = shadowUniformNames;
 const GLchar *shadowAttributeNames[SHADOWATTRNUM] = {"position"};
@@ -84,7 +96,23 @@ const GLchar **shadowAttrNames = shadowAttributeNames;
 shadowMap shadow;
 /* Returns 0 on success, non-zero on failure. */
 int initializeShading(void) {
-    /* The two matrices will be sent to the shaders as uniforms. */
+    /* 1st pass */
+    GLchar shadowVertexCode[] = "\
+        #version 140\n\
+		uniform mat4 viewing;\
+		uniform mat4 modeling;\
+        in vec3 position;\
+		void main() {\
+			gl_Position = viewing * modeling * vec4(position, 1.0);\
+		}";
+    GLchar shadowFragmentCode[] = "\
+        #version 140\n\
+        uniform vec3 color;\
+        out vec4 fragColor;\
+        void main(){\
+            fragColor = vec4(color, 1.0);\
+        }";
+    /* 2nd pass */
     GLchar vertexCode[] = "\
         #version 140\n\
 		uniform mat4 viewing;\
@@ -103,6 +131,15 @@ int initializeShading(void) {
 			pFragment = vec3(world);\
             textureST = textureCoords;\
 		}";
+//    mat4 scaleBias = mat4(
+//            0.5, 0.0, 0.0, 0.0,
+//            0.0, 0.5, 0.0, 0.0,
+//            0.0, 0.0, 0.5, 0.0,
+//            0.5, 0.5, 0.5, 1.0);
+//    vec4 pWorld = modeling * vec4(position, 1.0);
+//    gl_Position = viewing * pWorld;
+//    pFragmentS = scaleBias * viewingS * pWorld;\
+
     GLchar fragmentCode[] = "\
 		#version 140\n\
         uniform sampler2D texture0;\
@@ -113,6 +150,7 @@ int initializeShading(void) {
 		uniform vec3 cLight2;\
         uniform vec3 pLight;\
         uniform vec3 dSpot;\
+        uniform vec3 cosSpotAngle;\
 		in vec3 dNormal;\
         in vec3 pFragment;\
         in vec2 textureST;\
@@ -139,7 +177,7 @@ int initializeShading(void) {
             vec3 specular2 = vec3(0.0, 0.0, 0.0);\
             vec3 dSpotLight = normalize(pLight - pFragment);\
             vec3 dSpotNormal = normalize(dSpot);\
-            if (dot(dSpotLight, dSpotNormal) >= 0.9659){\
+            if (dot(dSpotLight, dSpotNormal) >= cosSpotAngle.x){\
                 float iDiff2 = dot(dSpotLight, dNorm);\
                 if (iDiff2 < 0.0)\
                     iDiff2 = 0.0;\
@@ -156,40 +194,24 @@ int initializeShading(void) {
 			vec3 ambient = cDiff * cAmbient;\
 			fragColor = vec4(diffuse1 + specular1 + diffuse2 + specular2 + ambient, 1.0);\
 		}";
-    GLchar shadowVertexCode[] = "\
-        #version 140\n\
-		uniform mat4 viewing;\
-		uniform mat4 modeling;\
-        in vec3 position;\
-		void main() {\
-			gl_Position = viewing * modeling * vec4(position, 1.0);\
-		}";
-    GLchar shadowFragmentCode[] = "\
-        #version 140\n\
-        uniform vec3 color;\
-        out vec4 fragColor;\
-        void main(){\
-            fragColor = vec4(color, 1.0);\
-        }";
-    return shaInitialize(&sha, vertexCode, fragmentCode, UNIFNUM, unifNames, ATTRNUM, attrNames) +
+    return shaInitialize(&sha, vertexCode, fragmentCode, UNIFNUM, unifNames, ATTRNUM, attrNames)+
            shaInitialize(&shadowSha, shadowVertexCode, shadowFragmentCode, SHADOWUNIFNUM, shadowUnifNames, SHADOWATTRNUM, shadowAttrNames);
 }
 
-void initializeMesh(meshglMesh *meshgl, meshMesh *mesh, shaShading *sha, shaShading *shadowSha){
+void initializeMesh(meshglMesh *meshgl, meshMesh *mesh, shaShading *shader, shaShading *shadowShader){
     meshglInitialize(meshgl, mesh);
-    meshDestroy(mesh);
-    glEnableVertexAttribArray(shadowSha->attrLocs[ATTRPOSITION]);
-    glVertexAttribPointer(shadowSha->attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
+    glEnableVertexAttribArray(shader->attrLocs[ATTRPOSITION]);
+    glVertexAttribPointer(shader->attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
                           meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
-    glEnableVertexAttribArray(shadowSha->attrLocs[ATTRTEXURECOORDS]);
-    glVertexAttribPointer(shadowSha->attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
+    glEnableVertexAttribArray(shader->attrLocs[ATTRTEXURECOORDS]);
+    glVertexAttribPointer(shader->attrLocs[ATTRTEXURECOORDS], 3, GL_DOUBLE, GL_FALSE,
                           meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
-    glEnableVertexAttribArray(shadowSha->attrLocs[ATTRNORMAL]);
-    glVertexAttribPointer(shadowSha->attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
+    glEnableVertexAttribArray(shader->attrLocs[ATTRNORMAL]);
+    glVertexAttribPointer(shader->attrLocs[ATTRNORMAL], 3, GL_DOUBLE, GL_FALSE,
                           meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(3 * sizeof(GLdouble)));
     meshglContinueInitialization(meshgl);
-    glEnableVertexAttribArray(sha->attrLocs[ATTRPOSITION]);
-    glVertexAttribPointer(sha->attrLocs[ATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
+    glEnableVertexAttribArray(shadowShader->attrLocs[SHADOWATTRPOSITION]);
+    glVertexAttribPointer(shadowShader->attrLocs[SHADOWATTRPOSITION], 3, GL_DOUBLE, GL_FALSE,
                           meshgl->attrDim * sizeof(GLdouble), BUFFER_OFFSET(0));
     meshglFinishInitialization(meshgl);
 }
@@ -204,16 +226,19 @@ double landNum = 100;
 double landData[100][100];
 void initializeMeshes(void) {
     /* The capsule */
-    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 10.0);
+    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 20.0);
     initializeMesh(&trunkGL, &trunk, &sha, &shadowSha);
+    meshDestroy(&trunk);
     /* A really cool sphere */
     meshInitializeSphere(&tree, 5, 32, 32);
     initializeMesh(&treeGL, &tree, &sha, &shadowSha);
+    meshglFinishInitialization(&treeGL);
     /* The landscape */
     GLuint error = meshInitializeLandscape(&landscape, landNum, landNum, 1.0, (GLdouble *) landData);
     if (error == 0) {
         meshglInitialize(&landscapeGL,&landscape);
         initializeMesh(&landscapeGL,&landscape, &sha, &shadowSha);
+        meshDestroy(&landscape);
     }
 }
 
@@ -251,26 +276,26 @@ int initializeScene() {
         oh += initializeTextures(tex3[i], path3);
     oh += shadowInitialize(&shadow, mainSCREENWIDTH, mainSCREENWIDTH);
     /* bodies and their textures */
-    oh += bodyInitialize(&landscapeBody, 3, 1);
+    oh += bodyInitialize(&landscapeBody, 0, 1);
     bodySetMesh(&landscapeBody, &landscapeGL);
     for (int i = 0; i < 1; i += 1)
         bodySetTexture(&landscapeBody, i, tex1[i]);
-    oh += bodyInitialize(&trunkBody1, 3, 1);
+    oh += bodyInitialize(&trunkBody1, 0, 1);
     bodySetMesh(&trunkBody1, &trunkGL);
     for (int i = 0; i < 1; i += 1)
         bodySetTexture(&trunkBody1, i, tex3[i]);
-    oh += bodyInitialize(&trunkBody2, 3, 1);
+    oh += bodyInitialize(&trunkBody2, 0, 1);
     bodySetMesh(&trunkBody2, &trunkGL);
     for (int i = 0; i < 1; i += 1)
         bodySetTexture(&trunkBody2, i, tex3[i]);
-    oh += bodyInitialize(&treeBody1, 3, 1);
+    oh += bodyInitialize(&treeBody1, 0, 1);
     bodySetMesh(&treeBody1, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody1, i, tex1[i]);
-    oh += bodyInitialize(&treeBody2, 3, 1);
+        bodySetTexture(&treeBody1, i, tex2[i]);
+    oh += bodyInitialize(&treeBody2, 0, 1);
     bodySetMesh(&treeBody2, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody2, i, tex1[i]);
+        bodySetTexture(&treeBody2, i, tex2[i]);
     return oh;
 }
 
@@ -302,20 +327,58 @@ void uniformVector3(GLdouble v[3], GLint uniformLocation) {
     glUniform3fv(uniformLocation, 1, vFloat);
 }
 
-void renderBody(bodyBody *body, shaShading *sha, GLuint VAOINDEX){
+void configureScene(){
+    /* Same rotation for all bodies in scene */
+    GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
+    GLdouble rot[3][3];
+    mat33AngleAxisRotation(angle, axis, rot);
+    isoSetRotation(&landscapeBody.isometry, rot);
+    isoSetRotation(&trunkBody1.isometry, rot);
+    isoSetRotation(&trunkBody2.isometry, rot);
+    isoSetRotation(&treeBody1.isometry, rot);
+    isoSetRotation(&treeBody2.isometry, rot);
+    /* but different translations obviously */
+    GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
+    GLdouble transTrunk1[3] = {0.0, 0.0, 0.0};
+    GLdouble transTrunk2[3] = {20.0, 10.0, 0.0};
+    GLdouble transTree1[3] = {0.0, 0.0, 20.0};
+    GLdouble transTree2[3] = {20.0, 10.0, 20.0};
+    isoSetTranslation(&landscapeBody.isometry, transLandscape);
+    isoSetTranslation(&trunkBody1.isometry, transTrunk1);
+    isoSetTranslation(&trunkBody2.isometry, transTrunk2);
+    isoSetTranslation(&treeBody1.isometry, transTree1);
+    isoSetTranslation(&treeBody2.isometry, transTree2);
+}
+
+void renderBody(bodyBody *body, shaShading *shader, GLuint vaoINDEX) {
     GLdouble model[4][4];
     isoGetHomogeneous(&body->isometry, model);
-    uniformMatrix44(model, sha->unifLocs[UNIFMODELING]);
-    if (VAOINDEX == 1){
-        texRender(body->tex[0], GL_TEXTURE0, 0, sha->unifLocs[UNIFTEXTURE0]);
-        meshglRender(body->mesh, VAOINDEX);
+    uniformMatrix44(model, shader->unifLocs[UNIFMODELING]);
+    if (vaoINDEX == 0) {
+        texRender(body->tex[0], GL_TEXTURE0, 0, shader->unifLocs[UNIFTEXTURE0]);
+        meshglRender(body->mesh, vaoINDEX);
         texUnrender(body->tex[0], GL_TEXTURE0);
+    } else {
+        GLdouble color[3];
+        vecCopy(3, body->aux, color);
+        uniformVector3(color, shader->unifLocs[SHADOWUNIFCOLOR]);
+        meshglRender(body->mesh, vaoINDEX);
     }
-    else {
-        GLdouble color[3] = &body->aux;
-        uniformVector3(color, sha->unifLocs[SHADOWUNIFCOLOR]);
-        meshglRender(body->mesh, VAOINDEX);
-    }
+}
+
+void renderShadowly(double oldtime, double newtime){
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glUseProgram(shadowSha.program);
+    /* Send our own viewing transformation P C^-1 to the shaders. */
+    GLdouble viewing[4][4];
+    camGetProjectionInverseIsometry(&cam2, viewing);
+    uniformMatrix44(viewing, shadowSha.unifLocs[SHADOWUNIFVIEWING]);
+    configureScene();
+    renderBody(&landscapeBody, &shadowSha, 1);
+    renderBody(&trunkBody1, &shadowSha, 1);
+    renderBody(&trunkBody2, &shadowSha, 1);
+    renderBody(&treeBody1, &shadowSha, 1);
+    renderBody(&treeBody2, &shadowSha, 1);
 }
 
 void renderRegularly(double oldTime, double newTime) {
@@ -325,127 +388,41 @@ void renderRegularly(double oldTime, double newTime) {
     GLdouble viewing[4][4];
     camGetProjectionInverseIsometry(&cam1, viewing);
     uniformMatrix44(viewing, sha.unifLocs[UNIFVIEWING]);
+    configureScene();
+    /* Give fragment shader the light's view */
+//    GLdouble viewingS[4][4];
+//    camGetProjectionInverseIsometry(&cam2, viewingS);
+//    uniformMatrix44(viewingS, sha.unifLocs[UNIFVIEWINGS]);
     /* Send light color and light direction to the shaders. */
     GLdouble cLIGHT1[3] = {0.1, 0.1, 0.1};
     GLdouble dLIGHT[3] = {1.0, 1.0, 1.0};
-    GLdouble cAMBIENT[3] = {0.7, 0.7, 0.7};
+    GLdouble cAMBIENT[3] = {0.5, 0.5, 0.5};
     GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
     GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
-    GLdouble pLIGHT[3] = {50, 50, 10.0};
-    GLdouble dSPOT[3] = {1.0, 1.0, 0.0};
+    GLdouble pLIGHT[3] = {shadowCameraTarget[0], shadowCameraTarget[1] + shadowCameraRho, shadowCameraTarget[2]};
+    GLdouble dSPOT[3] = {pLIGHT[0], pLIGHT[1], 0.0};
+    GLdouble COSSPOTANGLE[3] = {cos(spotLightAngle / 2), 0.0, 0.0};
     uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
     uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
     uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
     uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
-    uniformVector3(pCAMERA, sha.unifLocs[UNIFpCAMERA]);
     uniformVector3(cLIGHT2, sha.unifLocs[UNIFcLIGHT2]);
     uniformVector3(pLIGHT, sha.unifLocs[UNIFpLIGHT]);
     uniformVector3(dSPOT, sha.unifLocs[UNIFdSPOT]);
-    /* Same rotation for all bodies in scene */
-    GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
-    GLdouble rot[3][3];
-    mat33AngleAxisRotation(angle, axis, rot);
-    isoSetRotation(&landscapeBody.isometry, rot);
-    isoSetRotation(&trunkBody1.isometry, rot);
-    isoSetRotation(&trunkBody2.isometry, rot);
-    isoSetRotation(&treeBody1.isometry, rot);
-    isoSetRotation(&treeBody2.isometry, rot);
-    /* but different translations obviously */
-    GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, 0.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, 0.0, 15.0};
-    isoSetTranslation(&landscapeBody.isometry, transLandscape);
-    isoSetTranslation(&trunkBody1.isometry, transTrunk1);
-    isoSetTranslation(&trunkBody2.isometry, transTrunk2);
-    isoSetTranslation(&treeBody1.isometry, transTree1);
-    isoSetTranslation(&treeBody2.isometry, transTree2);
-    renderBody(&landscapeBody, &sha, 1);
-    renderBody(&trunkBody1, &sha, 1);
-    renderBody(&trunkBody2, &sha, 1);
-    renderBody(&treeBody1, &sha, 1);
-    renderBody(&treeBody2, &sha, 1);
+    uniformVector3(COSSPOTANGLE, sha.unifLocs[UNIFCOSSPOTANGLE]);
+    renderBody(&landscapeBody, &sha, 0);
+    renderBody(&trunkBody1, &sha, 0);
+    renderBody(&trunkBody2, &sha, 0);
+    renderBody(&treeBody1, &sha, 0);
+    renderBody(&treeBody2, &sha, 0);
 }
 
-void renderShadowly(double oldtime, double newtime){
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(shadowSha.program);
-    /* Send our own viewing transformation P C^-1 to the shaders. */
-    GLdouble viewing[4][4];
-    camGetProjectionInverseIsometry(&cam2, viewing);
-    uniformMatrix44(viewing, shadowSha.unifLocs[UNIFVIEWING]);
-    /* Same rotation for all bodies in scene */
-    GLdouble axis[3] = {1.0 / sqrt(3.0), 1.0 / sqrt(3.0), 1.0 / sqrt(3.0)};
-    GLdouble rot[3][3];
-    mat33AngleAxisRotation(angle, axis, rot);
-    isoSetRotation(&landscapeBody.isometry, rot);
-    isoSetRotation(&trunkBody1.isometry, rot);
-    isoSetRotation(&trunkBody2.isometry, rot);
-    isoSetRotation(&treeBody1.isometry, rot);
-    isoSetRotation(&treeBody2.isometry, rot);
-    /* but different translations obviously */
-    GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, 0.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, 0.0, 15.0};
-    isoSetTranslation(&landscapeBody.isometry, transLandscape);
-    isoSetTranslation(&trunkBody1.isometry, transTrunk1);
-    isoSetTranslation(&trunkBody2.isometry, transTrunk2);
-    isoSetTranslation(&treeBody1.isometry, transTree1);
-    isoSetTranslation(&treeBody2.isometry, transTree2);
-    /* set uniform colors */
-    GLdouble colorLandscape[3] = {0.0, 1.0, 0.0};
-    GLdouble colorTrunk[3] = {0.0, 0.0, 1.0};
-    GLdouble colorTree[3] = {1.0, 0.0, 0.0};
-    bodySetAuxiliaries(&landscapeBody, 0, 3, colorLandscape);
-    bodySetAuxiliaries(&trunkBody1, 0, 3, colorTrunk);
-    bodySetAuxiliaries(&trunkBody2, 0, 3, colorTrunk);
-    bodySetAuxiliaries(&treeBody1, 0, 3, colorTree);
-    bodySetAuxiliaries(&treeBody2, 0, 3, colorTree);
-    renderBody(&landscapeBody, &shadowSha, 0);
-    renderBody(&trunkBody1, &shadowSha, 0);
-    renderBody(&trunkBody2, &shadowSha, 0);
-    renderBody(&treeBody1, &shadowSha, 0);
-    renderBody(&treeBody2, &shadowSha, 0);
-
+void render(double oldtime, double newtime){
+    shadowRenderFirst(&shadow);
+    renderShadowly(oldtime, newtime);
+    shadowUnrenderFirst(&shadow);
+    renderRegularly(oldtime, newtime);
 }
-
-//void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
-//                  int altOptionIsDown, int superCommandIsDown) {
-//    if (key == GLFW_KEY_A)
-//        cameraTheta -= M_PI / 50;
-//    else if (key == GLFW_KEY_D)
-//        cameraTheta += M_PI / 50;
-//    else if (key == GLFW_KEY_W)
-//        cameraPhi -= M_PI / 50;
-//    else if (key == GLFW_KEY_S)
-//        cameraPhi += M_PI / 50;
-//    else if (key == GLFW_KEY_Q)
-//        cameraRho *= 0.9;
-//    else if (key == GLFW_KEY_E)
-//        cameraRho *= 1.1;
-//    else if (key == GLFW_KEY_Z)
-//        cameraTarget[0] -= 5;
-//    else if (key == GLFW_KEY_C)
-//        cameraTarget[0] += 5;
-//    else if (key == GLFW_KEY_RIGHT)
-//        cameraTarget[1] -= 1;
-//    else if (key == GLFW_KEY_LEFT)
-//        cameraTarget[1] += 1;
-//    else if (key == GLFW_KEY_UP)
-//        cameraTarget[2] -= 1;
-//    else if (key == GLFW_KEY_DOWN)
-//        cameraTarget[2] += 1;
-//    else if (key == GLFW_KEY_O)
-//        unifWater[mainUNIFMODELING] -= 0.1;
-//    else if (key == GLFW_KEY_P)
-//        unifWater[mainUNIFMODELING] += 0.1;
-//    camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE,
-//                  mainSCREENSIZE);
-//    camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
-//}
 
 int main(void) {
     /* landscape preparation */
@@ -503,9 +480,9 @@ int main(void) {
     camLookAt(&cam1, cameraTarget, cameraRho, cameraPhi, cameraTheta);
     camSetProjectionType(&cam1, camPERSPECTIVE);
     camSetFrustum(&cam1, M_PI / 6.0, cameraRho, 10.0, mainSCREENHEIGHT, mainSCREENWIDTH);
-    camLookAt(&cam2, cameraTarget, shadowCameraRho, shadowCameraPhi, shadowCameraTheta);
+    camLookAt(&cam2, shadowCameraTarget, shadowCameraRho, shadowCameraPhi, shadowCameraTheta);
     camSetProjectionType(&cam2, camPERSPECTIVE);
-    camSetFrustum(&cam2, M_PI / 12.0, shadowCameraRho, 10.0, mainSCREENWIDTH, mainSCREENWIDTH);
+    camSetFrustum(&cam2, M_PI / 6.0, shadowCameraRho, 10.0, mainSCREENWIDTH, mainSCREENWIDTH);
     /* Initialize the shader program before the mesh, so that the shader
     locations are already set up by the time the vertex array object is
     initialized. */
@@ -516,10 +493,8 @@ int main(void) {
         newTime = getTime();
         if (floor(newTime) - floor(oldTime) >= 1.0)
             printf("main: %f frames/sec\n", 1.0 / (newTime - oldTime));
-//        pixSetKeyDownHandler(handleKeyAny);
-//        pixSetKeyRepeatHandler(handleKeyAny);
-//        pixSetKeyUpHandler(handleKeyAny);
-        renderShadowly(oldTime, newTime);
+        render(oldTime, newTime);
+        renderRegularly(oldTime, newTime);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

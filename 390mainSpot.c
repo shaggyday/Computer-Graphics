@@ -36,6 +36,7 @@
 #define UNIFcLIGHT2 7
 #define UNIFpLIGHT 8
 #define UNIFdSPOT 9
+#define UNIFdCOSSPOTANGLE 10
 #define ATTRPOSITION 0
 #define ATTRTEXURECOORDS 1
 #define ATTRNORMAL 2
@@ -46,6 +47,7 @@ double cameraTarget[3] = {0.0, 0.0, 0.0};
 double cameraRho = 200.0;
 double cameraPhi = M_PI / 3.0;
 double cameraTheta = -M_PI / 4.0;
+double spotAngle = M_PI / 12;
 
 double getTime(void) {
     struct timeval tv;
@@ -168,7 +170,7 @@ double landNum = 100;
 double landData[100][100];
 void initializeMeshes(void) {
     /* The capsule */
-    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 10.0);
+    meshInitializeBox(&trunk, -2.0, 2.0, -2.0, 2.0, 0.0, 20.0);
     initializeMesh(&trunkGL, &trunk, &sha);
     meshDestroy(&trunk);
     /* A really cool sphere */
@@ -232,11 +234,11 @@ int initializeScene() {
     oh += bodyInitialize(&treeBody1, 0, 1);
     bodySetMesh(&treeBody1, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody1, i, tex1[i]);
+        bodySetTexture(&treeBody1, i, tex2[i]);
     oh += bodyInitialize(&treeBody2, 0, 1);
     bodySetMesh(&treeBody2, &treeGL);
     for (int i = 0; i < 1; i += 1)
-        bodySetTexture(&treeBody2, i, tex1[i]);
+        bodySetTexture(&treeBody2, i, tex2[i]);
     return oh;
 }
 
@@ -267,6 +269,12 @@ void uniformVector3(GLdouble v[3], GLint uniformLocation) {
     glUniform3fv(uniformLocation, 1, vFloat);
 }
 
+void uniformVector1(GLdouble v[1], GLint uniformLocation){
+    GLfloat vFloat[1] = {v[0]};
+    glUniform1fv(uniformLocation, 1, vFloat);
+
+}
+
 void renderBody(bodyBody *body){
     GLdouble model[4][4];
     isoGetHomogeneous(&body->isometry, model);
@@ -289,8 +297,8 @@ void render(double oldTime, double newTime) {
     GLdouble cAMBIENT[3] = {0.7, 0.7, 0.7};
     GLdouble pCAMERA[3] = {0.0, 0.0, 1.0};
     GLdouble cLIGHT2[3] = {1.0, 1.0, 1.0};
-    GLdouble pLIGHT[3] = {50, 50, 10.0};
-    GLdouble dSPOT[3] = {1.0, 1.0, 0.0};
+    GLdouble pLIGHT[3] = {25, 75, 20.0};
+    GLdouble dSPOT[3] = {25, 75, 20.0};
     uniformVector3(cLIGHT1, sha.unifLocs[UNIFcLIGHT1]);
     uniformVector3(dLIGHT, sha.unifLocs[UNIFdLIGHT]);
     uniformVector3(cAMBIENT, sha.unifLocs[UNIFcAMBIENT]);
@@ -310,10 +318,10 @@ void render(double oldTime, double newTime) {
     isoSetRotation(&treeBody2.isometry, rot);
     /* but different translations obviously */
     GLdouble transLandscape[3] = {-50.0, -50.0, 0.0};
-    GLdouble transTrunk1[3] = {-10.0, -10.0, 5.0};
-    GLdouble transTrunk2[3] = {-30.0, 0.0, 5.0};
-    GLdouble transTree1[3] = {-10.0, -10.0, 15.0};
-    GLdouble transTree2[3] = {-30.0, 0.0, 15.0};
+    GLdouble transTrunk1[3] = {0.0, 0.0, 5.0};
+    GLdouble transTrunk2[3] = {20.0, 10.0, 5.0};
+    GLdouble transTree1[3] = {0.0, 0.0, 25.0};
+    GLdouble transTree2[3] = {20.0, 10.0, 25.0};
     isoSetTranslation(&landscapeBody.isometry, transLandscape);
     isoSetTranslation(&trunkBody1.isometry, transTrunk1);
     isoSetTranslation(&trunkBody2.isometry, transTrunk2);
@@ -352,10 +360,10 @@ void render(double oldTime, double newTime) {
 //        cameraTarget[2] -= 1;
 //    else if (key == GLFW_KEY_DOWN)
 //        cameraTarget[2] += 1;
-////    else if (key == GLFW_KEY_O)
-////        unifWater[mainUNIFMODELING] -= 0.1;
-////    else if (key == GLFW_KEY_P)
-////        unifWater[mainUNIFMODELING] += 0.1;
+//    else if (key == GLFW_KEY_O)
+//        unifWater[mainUNIFMODELING] -= 0.1;
+//    else if (key == GLFW_KEY_P)
+//        unifWater[mainUNIFMODELING] += 0.1;
 //    camSetFrustum(&cam, M_PI / 6.0, cameraRho, 10.0, mainSCREENSIZE,
 //                  mainSCREENSIZE);
 //    camLookAt(&cam, cameraTarget, cameraRho, cameraPhi, cameraTheta);
