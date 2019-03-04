@@ -2,7 +2,7 @@
 
 
 /* On macOS, compile with...
-    clang 600mainSphere.c 000pixel.o -lglfw -framework OpenGL
+    clang 610mainTexturing.c 000pixel.o -lglfw -framework OpenGL
 */
 #include <stdio.h>
 #include <math.h>
@@ -14,6 +14,7 @@
 #include "140matrix.c"
 #include "600isometry.c"
 #include "600camera.c"
+#include "040texture.c"
 
 #define SCREENWIDTH 512
 #define SCREENHEIGHT 512
@@ -30,6 +31,11 @@ int cameraMode = 0;
 isoIsometry isomA, isomB;
 double radiusA = 1.0, radiusB = 1.5;
 double colorA[3] = {1.0, 0.0, 1.0}, colorB[3] = {1.0, 1.0, 0.0};
+
+/* Texture */
+texTexture texture;
+const texTexture *textures[1] = {&texture};
+const texTexture **tex = textures;
 
 /* Rendering ******************************************************************/
 
@@ -79,6 +85,22 @@ rayRecord sphereIntersection(const isoIsometry *iso, double radius,
 	return result;
 }
 
+/* Fills the RGB color with the color sampled from the specified texture. */
+void sphereColor(const isoIsometry *isom, double radius, const double e[3],
+				 const double d[3], double tEnd, const texTexture *tex, double rgb[3]){
+	double tTimesD[3], world[3], local[3];
+	double s, t;
+	vecScale(3, tEnd, d, tTimesD);
+	vecAdd(3, e, tTimesD, world);
+	isoUntransformPoint(isom, world, local);
+	vec3Rectangular(local, &radius, &s, &t);
+//	printf("1111\n");
+//	fflush(stdout);
+	texSample(tex, s, t, rgb);
+//	printf("2222\n");
+//	fflush(stdout);
+}
+
 void render(void) {
 	double homog[4][4], screen[4], world[4], e[3], d[3], rgb[3];
 	double tStart, tEnd;
@@ -104,21 +126,23 @@ void render(void) {
 			tEnd = INFINITY;
 			/* Test the first sphere. */
 			recA = sphereIntersection(&isomA, radiusA, e, d, tStart, tEnd);
-			if (recA.intersected == 1)
+			if (recA.intersected != 0)
 				tEnd = recA.t;
 			/* Test the second sphere. */
 			recB = sphereIntersection(&isomB, radiusB, e, d, tStart, tEnd);
+			if (recB.intersected != 0 && recB.t < recA.t)
+				tEnd = recB.t;
 			/* Choose the winner. */
 			if (recA.intersected != 0 && recB.intersected != 0) {
 				if (recB.t <= recA.t)
-					vecCopy(3, colorB, rgb);
+					sphereColor(&isomB, radiusB, e, d, tEnd, tex[0], rgb);
 				else
-					vecCopy(3, colorA, rgb);
+					sphereColor(&isomA, radiusA, e, d, tEnd, tex[0], rgb);
 			}
 			else if (recA.intersected != 0 && recB.intersected == 0)
-				vecCopy(3, colorA, rgb);
+				sphereColor(&isomA, radiusA, e, d, tEnd, tex[0], rgb);
 			else if (recA.intersected == 0 && recB.intersected != 0)
-				vecCopy(3, colorB, rgb);
+				sphereColor(&isomB, radiusB, e, d, tEnd, tex[0], rgb);
 			else
 				vec3Set(0.0, 0.0, 0.0, rgb);
 			pixSetRGB(i, j, rgb[0], rgb[1], rgb[2]);
@@ -171,6 +195,8 @@ void handleTimeStep(double oldTime, double newTime) {
 int main(void) {
 	if (pixInitialize(SCREENWIDTH, SCREENHEIGHT, "Ray Tracing") != 0)
 		return 1;
+	else if (texInitializeFile(&texture, "Noether_retusche_nachcoloriert.jpg") != 0)
+		return 2;
 	else {
 		/* Initialize the scene. */
 		camSetProjectionType(&camera, camPERSPECTIVE);
@@ -184,12 +210,19 @@ int main(void) {
 		vec3Set(1.0, 0.0, 1.0, center);
 		isoSetTranslation(&isomB, center);
 		isoSetRotation(&isomB, r);
+		/* Initialize texture */
+		texSetFiltering(&texture, texNEAREST);
+		texSetLeftRight(&texture, texREPEAT);
+		texSetTopBottom(&texture, texREPEAT);
+		texture.texelDim = 3;
 		/* Initialize and run the user interface. */
 		pixSetKeyDownHandler(handleKeyDown);
 		pixSetKeyRepeatHandler(handleKeyAny);
 		pixSetKeyUpHandler(handleKeyAny);
 		pixSetTimeStepHandler(handleTimeStep);
 		pixRun();
+		/* Cleaning things up */
+		texDestroy(&texture);
 		return 0;
 	}
 }
