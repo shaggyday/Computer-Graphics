@@ -29,7 +29,7 @@ int cameraMode = 0;
 
 /* These are our two sphere bodies. */
 isoIsometry isomA, isomB;
-double radiusA = 0.7, radiusB = 1.5;
+double radiusA = 2.0, radiusB = 1.5;
 double colorA[3] = {1.0, 0.0, 1.0}, colorB[3] = {1.0, 1.0, 0.0};
 
 /* Texture */
@@ -178,7 +178,7 @@ void sphereReflect(const isoIsometry *isom, double radius, const double e[3],
     tEnd = INFINITY;
     recB = sphereIntersection(&isomB, radiusB, x, dReflect, tStart, tEnd);
     /* Copy reflected color */
-    if (recB.intersected == 1)
+    if (recB.intersected == -1)
         sphereColor(&isomB, radiusB, x, dReflect, recB.t, tex, rgb);
     else
         vec3Set(0.0, 0.0, 0.0, rgb);
@@ -249,7 +249,7 @@ void handleKeyCamera(int key) {
         cameraTheta += 0.1;
     else if (key == GLFW_KEY_E)
         cameraRho *= 0.9;
-    else if (key == GLFW_KEY_C)
+    else if (key == GLFW_KEY_Q)
         cameraRho *= 1.1;
     else if (key == GLFW_KEY_UP)
         dLight[1] += 5;
@@ -267,13 +267,13 @@ void handleKeyCamera(int key) {
 void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
                   int altOptionIsDown, int superCommandIsDown) {
     if (key == GLFW_KEY_W || key == GLFW_KEY_A || key == GLFW_KEY_S ||
-        key == GLFW_KEY_D || key == GLFW_KEY_E || key == GLFW_KEY_C ||
+        key == GLFW_KEY_D || key == GLFW_KEY_E || key == GLFW_KEY_Q ||
         key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT)
         handleKeyCamera(key);
 }
 void handleKeyDown(int key, int shiftIsDown, int controlIsDown,
                    int altOptionIsDown, int superCommandIsDown) {
-    if (key == GLFW_KEY_Q)
+    if (key == GLFW_KEY_C)
         cameraMode = 1 - cameraMode;
     else
         handleKeyAny(key, shiftIsDown, controlIsDown, altOptionIsDown,
@@ -300,7 +300,7 @@ int main(void) {
         mat33AngleAxisRotation(0.0, axis, r);
         isoSetTranslation(&isomA, center);
         isoSetRotation(&isomA, r);
-        vec3Set(1.0, 0.0, 1.0, center);
+        vec3Set(2.7, 0.0, 2.7, center);
         isoSetTranslation(&isomB, center);
         isoSetRotation(&isomB, r);
         vecUnit(3, dLight, dLight);
