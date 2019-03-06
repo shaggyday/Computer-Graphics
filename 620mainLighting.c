@@ -12,7 +12,7 @@
 
 #include "610vector.c"
 #include "140matrix.c"
-#include "600isometry.c"
+#include "610isometry.c"
 #include "600camera.c"
 #include "040texture.c"
 
@@ -40,9 +40,9 @@ const texTexture **tex = textures;
 /* Lighting */
 double cLight[3] = {1.0, 1.0, 1.0};
 double dLight[3] = {1.0, 1.0, 1.0};
-double cSpecular[3] = {1.0, 1.0, 1.0};
-int shininess = 20;
-double cAmbient[3] = {0.5, 0.5, 0.5};
+double cSpecular[3] = {0.5, 0.5, 0.5};
+double shininess = 20.0;
+double cAmbient[3] = {0.1, 0.1, 0.1};
 
 /* Rendering ******************************************************************/
 
@@ -92,54 +92,52 @@ rayRecord sphereIntersection(const isoIsometry *isom, double radius,
 	return result;
 }
 
-/* Fills the RGB color with the color sampled from the specified texture. */
-void sphereColor(const isoIsometry *isom, double radius, const double e[3],
-				 const double d[3], double tEnd, const texTexture *tex, double rgb[3]){
-	double tTimesD[3], world[3], local[3];
-	double s, t;
-	vecScale(3, tEnd, d, tTimesD);
-	vecAdd(3, e, tTimesD, world);
-	isoUntransformPoint(isom, world, local);
-	vec3Rectangular(local, &radius, &s, &t);
-	texSample(tex, s / M_PI, t/(2 * M_PI), rgb);
-}
-
-void addLighting(const isoIsometry *isom, const double e[3],
-				 const double d[3], double tEnd, double rgb[3]){
-	double tTimesD[3], world[3], center[3], worldMinusCenter[3], temp[3];
-	double dNormal[3];
+void addLighting(const isoIsometry *isom, const double x[3],
+				 double dCamera[3], double rgb[3]){
+	double center[3], xMinusCenter[3], temp[3], dNormal[3];
 	vecCopy(3, isom->translation, center);
-	vecScale(3, tEnd, d, tTimesD);
-	vecAdd(3, e, tTimesD, world);
-	vecSubtract(3, world, center, worldMinusCenter);
-	vecUnit(3, worldMinusCenter, dNormal);
+	vecSubtract(3, x, center, xMinusCenter);
+	vecUnit(3, xMinusCenter, dNormal);
 	double diffuse[3] = {0.0, 0.0, 0.0}, specular[3] = {0.0, 0.0, 0.0}, ambient[3] = {0.0, 0.0, 0.0};
 	/* Lambertian diffuse reflection */
-//	double cDiffuse[3];
-//	vecCopy(3, rgb, cDiffuse);
-//	vecMultiply(3, cDiffuse, cLight, diffuse);
-//	double iDIFF = vecDot(3, dNormal, dLight);
-//	if (iDIFF < 0.0)
-//		iDIFF = 0.0;
-//	vecScale(3, iDIFF, diffuse, diffuse);
-//	/* Specular reflection that reflects camera instead of light */
-//	double dCamera[3], dReflect[3];
-//	vecUnit(3, e, dCamera); // hmmmm
-//	double scalar = 2 * vecDot(3, dCamera, dNormal);
-//	vecScale(3, scalar, dNormal, temp);
-//	vecSubtract(3, temp, dCamera, dReflect);
-//	double iSPEC = vecDot(3, dReflect, dLight);
-//	if (iDIFF == 0.0 || iSPEC < 0.0)
-//		iSPEC = 0.0;
-//	iSPEC = pow(iSPEC, shininess);
-//	vecMultiply(3, cSpecular, cLight, specular);
-//	vecScale(3, iSPEC, specular, specular);
-//	/* Ambient reflection */
-//	vecMultiply(3, cDiffuse, cAmbient, ambient);
+	double cDiffuse[3];
+	vecCopy(3, rgb, cDiffuse);
+	vecMultiply(3, cDiffuse, cLight, diffuse);
+	double iDIFF = vecDot(3, dNormal, dLight);
+	if (iDIFF < 0.0)
+		iDIFF = 0.0;
+	vecScale(3, iDIFF, diffuse, diffuse);
+	/* Specular reflection that reflects camera instead of light */
+    vecUnit(3, dCamera, dCamera);
+	double scalar = 2 * vecDot(3, dCamera, dNormal);
+	vecScale(3, scalar, dNormal, temp);
+    double dReflect[3];
+	vecSubtract(3, temp, dCamera, dReflect);
+	double iSPEC = vecDot(3, dReflect, dLight);
+	if (iDIFF == 0.0 || iSPEC < 0.0)
+		iSPEC = 0.0;
+	iSPEC = pow(iSPEC, shininess);
+	vecMultiply(3, cSpecular, cLight, specular);
+	vecScale(3, iSPEC, specular, specular);
+	/* Ambient reflection */
+	vecMultiply(3, cDiffuse, cAmbient, ambient);
 	/* Adding things up */
-	vecAdd3(3, diffuse, specular, ambient, temp);
-	vecAdd(3, temp, rgb, rgb);
+	vecAdd3(3, diffuse, specular, ambient, rgb);
+}
 
+/* Fills the RGB color with the color sampled from the specified texture. */
+void sphereColor(const isoIsometry *isom, double radius, const double e[3],
+                 const double d[3], double tEnd, const texTexture *tex, double rgb[3]){
+    double tTimesD[3], x[3], local[3];
+    double rho, phi, theta;
+    vecScale(3, tEnd, d, tTimesD);
+    vecAdd(3, e, tTimesD, x);
+    isoUntransformPoint(isom, x, local);
+    vec3Rectangular(local, &rho, &phi, &theta);
+    texSample(tex, phi, theta, rgb);
+    double dCamera[3];
+    vecScale(3, -1.0, d, dCamera);
+    addLighting(isom, x, dCamera, rgb);
 }
 
 void render(void) {
@@ -177,20 +175,16 @@ void render(void) {
 			if (recA.intersected != 0 && recB.intersected != 0) {
 				if (recB.t <= recA.t) {
 					sphereColor(&isomB, radiusB, e, d, tEnd, tex[0], rgb);
-					addLighting(&isomB, e, d, tEnd, rgb);
 				}
 				else {
 					sphereColor(&isomA, radiusA, e, d, tEnd, tex[0], rgb);
-					addLighting(&isomA, e, d, tEnd, rgb);
 				}
 			}
 			else if (recA.intersected != 0 && recB.intersected == 0) {
 				sphereColor(&isomA, radiusA, e, d, tEnd, tex[0], rgb);
-				addLighting(&isomA, e, d, tEnd, rgb);
 			}
 			else if (recA.intersected == 0 && recB.intersected != 0) {
 				sphereColor(&isomB, radiusB, e, d, tEnd, tex[0], rgb);
-				addLighting(&isomB, e, d, tEnd, rgb);
 			}
 			else
 				vec3Set(0.0, 0.0, 0.0, rgb);
@@ -255,6 +249,7 @@ int main(void) {
 		vec3Set(1.0, 0.0, 1.0, center);
 		isoSetTranslation(&isomB, center);
 		isoSetRotation(&isomB, r);
+		vecUnit(3, dLight, dLight);
 		/* Initialize texture */
 		texSetFiltering(&texture, texLINEAR);
 		texSetLeftRight(&texture, texREPEAT);
