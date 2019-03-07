@@ -23,12 +23,8 @@ rayResponse cylIntersection(const void *body, const rayQuery *query) {
 	eE = vecDot(2, eLocal, eLocal);
 	dE = vecDot(2, dLocal, eLocal);
 	dD = vecDot(2, dLocal, dLocal);
-	printf("a = %f\n", dD);
-	fflush(stdout);
 	disc = dE * dE - dD * (eE - cyl->radius * cyl->radius);
 	if (disc <= 0) {
-		printf("yep, a = %f\n", dD);
-		fflush(stdout);
 		result.intersected = 0;
 		return result;
 	}

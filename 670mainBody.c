@@ -2,7 +2,7 @@
 
 
 /* On macOS, compile with...
-    clang 660mainBody.c 000pixel.o -lglfw -framework OpenGL
+    clang 670mainBody.c 000pixel.o -lglfw -framework OpenGL
 */
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ void diffuseAndSpecular(const double dNormal[3], const double dLight[3],
 
 #define SCREENWIDTH 512
 #define SCREENHEIGHT 512
-#define BODYNUM 5
+#define BODYNUM 6
 
 double dLightRaw[3] = {1.0, 1.0, 1.0}, dLight[3];
 double cLight[3] = {1.0, 1.0, 1.0};
@@ -56,6 +56,7 @@ double cAmbient[3] = {0.1, 0.1, 0.1};
 
 #include "650cylinder.c"
 #include "660sphere.c"
+#include "670plane.c"
 
 camCamera camera;
 double cameraTarget[3] = {0.0, 0.0, 0.0};
@@ -66,7 +67,8 @@ int cameraMode = 0;
 texTexture textureEmmy, textureRed, textureGreen, textureBlue;
 cylCylinder cylRed, cylGreen, cylBlue;
 sphereSphere sphA, sphB;
-void *bodies[BODYNUM] = {&cylRed, &cylGreen, &cylBlue, &sphA, &sphB};
+plaPlane plane;
+void *bodies[BODYNUM] = {&cylRed, &cylGreen, &cylBlue, &sphA, &sphB, &plane};
 
 
 /* Rendering ******************************************************************/
@@ -202,6 +204,15 @@ void initializeSphere(sphereSphere *sph, double radius,
     sph->texture = texture;
 }
 
+void initializePlane(plaPlane *plane,
+		const double rot[3][3], const double transl[3], texTexture *texture){
+	plane->class = &planeClass;
+	isoSetRotation(&(plane->isometry), rot);
+	isoSetTranslation(&(plane->isometry), transl);
+	plane->texture = texture;
+
+}
+
 int main(void) {
 	if (pixInitialize(SCREENWIDTH, SCREENHEIGHT, "Ray Tracing") != 0)
 		return 1;
@@ -230,7 +241,7 @@ int main(void) {
 		initializeCylinder(&cylGreen, 0.1, rot, center, &textureGreen);
 		mat33AngleAxisRotation(0.0, axis, rot);
 		initializeCylinder(&cylBlue, 0.1, rot, center, &textureBlue);
-        mat33AngleAxisRotation(0.0, axis, rot);
+		initializePlane(&plane, rot, center, &textureEmmy);
 		initializeSphere(&sphA, 1.0, rot, center, &textureEmmy);
         vec3Set(2.0, 0.0, 2.0, center);
         initializeSphere(&sphB, 1.5, rot, center, &textureEmmy);

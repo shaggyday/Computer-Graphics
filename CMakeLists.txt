@@ -11,6 +11,6 @@ find_package(OpenGL REQUIRED)
 
 include_directories(. ${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 
-add_executable(day_7 660mainBody.c)
+add_executable(day_7 670mainBody.c)
 
 target_link_libraries(day_7 ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} m)
