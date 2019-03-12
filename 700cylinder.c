@@ -59,7 +59,6 @@ void cylColor(const void *body, const rayQuery *query,
               const rayResponse *response, int bodyNum, const void *bodies[],
               int lightNum, const void *lights[], const double cAmbient[3],
               double rgb[3]) {
-	double temp[3];
 	const cylCylinder *cyl = (const cylCylinder *)body;
 	/* x = e + t d. */
 	double x[3], xLocal[3];
@@ -76,7 +75,7 @@ void cylColor(const void *body, const rayQuery *query,
     lightResponse lightResponse1;
 	for (int i = 0; i < lightNum; i +=1){
         class = (lightClass **)(lights[i]);
-        lightResponse1 = (*class)->lighting(lights[i], xLocal);
+        lightResponse1 = (*class)->lighting(lights[i], x);
         int index = shadowTest(lightResponse1, x, bodyNum, bodies);
         if (index < 0) {
             /* Do lighting calculations in local coordinates. */
@@ -84,10 +83,12 @@ void cylColor(const void *body, const rayQuery *query,
             vecUnit(2, xLocal, dNormalLocal);
             dNormalLocal[2] = 0.0;
             isoUnrotateVector(&(cyl->isometry), lightResponse1.dLight, dLightLocal);
+            vecUnit(3, dLightLocal, dLightLocal);
             double pCameraLocal[3], dCameraLocal[3];
             isoUntransformPoint(&(cyl->isometry), query->e, pCameraLocal);
             vecSubtract(3, pCameraLocal, xLocal, dCameraLocal);
             vecUnit(3, dCameraLocal, dCameraLocal);
+            double temp[3];
             rayDiffuseAndSpecular(dNormalLocal, dLightLocal, dCameraLocal, cDiff,
                     lightResponse1.cLight, temp);
             vecAdd(3, temp, rgb, rgb);

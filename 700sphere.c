@@ -54,7 +54,6 @@ void sphColor(const void *body, const rayQuery *query,
               const rayResponse *response, int bodyNum, const void *bodies[],
               int lightNum, const void *lights[], const double cAmbient[3],
               double rgb[3]) {
-    double temp[3];
     const sphereSphere *sph = (const sphereSphere *) body;
 	/* x = e + t d. */
 	double tTimesD[3], x[3], xLocal[3];
@@ -72,18 +71,23 @@ void sphColor(const void *body, const rayQuery *query,
     lightResponse lightResponse1;
     for (int i = 0; i < lightNum; i +=1){
         class = (lightClass **)(lights[i]);
-        lightResponse1 = (*class)->lighting(lights[i], xLocal);
-        int index = shadowTest(lightResponse1, x, bodyNum, bodies);
+        lightResponse1 = (*class)->lighting(lights[i], x);
+        int index = shadowTest(lightResponse1,  x, bodyNum, bodies);
         if (index < 0) {
-            /* Do lighting calculations in global coordinates. */
-            double dCamera[3];
-            double center[3], xMinusCenter[3], dNormal[3];
+            /* Do lighting calculations in local coordinates. */
+            double dCamera[3], dCameraLocal[3], dLightLocal[3];
+            double center[3], xMinusCenter[3], dNormal[3], dNormalLocal[3];
             vecCopy(3, sph->isometry.translation, center);
             vecSubtract(3, x, center, xMinusCenter);
             vecUnit(3, xMinusCenter, dNormal);
+            isoUnrotateVector(&sph->isometry, dNormal, dNormalLocal);
+			isoUnrotateVector(&sph->isometry, lightResponse1.dLight, dLightLocal);
+			vecUnit(3, dLightLocal, dLightLocal);
             vecScale(3, -1.0, query->d, dCamera);
-            vecUnit(3, dCamera, dCamera);
-            rayDiffuseAndSpecular(dNormal, lightResponse1.dLight, dCamera, cDiffuse,
+			isoUnrotateVector(&sph->isometry, dCamera, dCameraLocal);
+            vecUnit(3, dCameraLocal, dCameraLocal);
+            double temp[3];
+            rayDiffuseAndSpecular(dNormalLocal, dLightLocal, dCameraLocal, cDiffuse,
                     lightResponse1.cLight, temp);
             vecAdd(3, temp, rgb, rgb);
         }

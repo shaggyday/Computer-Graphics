@@ -46,7 +46,6 @@ void planeColor(const void *body, const rayQuery *query,
                 const rayResponse *response, int bodyNum, const void *bodies[],
                 int lightNum, const void *lights[], const double cAmbient[3],
                 double rgb[3]) {
-    double temp[3];
 	const plaPlane *plane = (const plaPlane *) body;
 	/* x = e + t d. */
 	double tTimesD[3], x[3], xLocal[3];
@@ -54,7 +53,7 @@ void planeColor(const void *body, const rayQuery *query,
 	vecAdd(3, query->e, tTimesD, x);
 	isoUntransformPoint(&(plane->isometry), x, xLocal);
 	/* Sample texture to get diffuse surface color. */
-	double texCoords[2] = {xLocal[0], xLocal[1]};
+	double texCoords[2] = {xLocal[0] / 5,xLocal[1] / 5};
 	vecScale(3, 0.5, texCoords, texCoords);
 	/* Do lighting calculations in global coordinates */
 	double cDiffuse[plane->texture->texelDim];
@@ -64,17 +63,18 @@ void planeColor(const void *body, const rayQuery *query,
     lightResponse lightResponse1;
     for (int i = 0; i < lightNum; i +=1){
         class = (lightClass **)(lights[i]);
-        lightResponse1 = (*class)->lighting(lights[i], xLocal);
+        lightResponse1 = (*class)->lighting(lights[i], x);
         int index = shadowTest(lightResponse1, x, bodyNum, bodies);
         if (index < 0) {
-            /* Calculating the normals */
+			/* Do lighting calculations in local coordinates. */
             double dNormalLocal[3] = {0.0, 0.0, -response->intersected}, dLightLocal[3], dCameraLocal[3];
             isoUnrotateVector(&(plane->isometry), lightResponse1.dLight, dLightLocal);
-            /* Specular reflection that reflects camera instead of light */
+            vecUnit(3, dLightLocal, dLightLocal);
             double dCamera[3];
             vecScale(3, -1.0, query->d, dCamera);
-            isoUntransformPoint(&(plane->isometry), dCamera, dCameraLocal);
+			isoUnrotateVector(&(plane->isometry), dCamera, dCameraLocal);
             vecUnit(3, dCameraLocal, dCameraLocal);
+            double temp[3];
             rayDiffuseAndSpecular(dNormalLocal, dLightLocal, dCameraLocal, cDiffuse,
                     lightResponse1.cLight, temp);
             vecAdd(3, temp, rgb, rgb);

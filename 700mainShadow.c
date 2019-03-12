@@ -26,9 +26,9 @@
 #define BODYNUM 6
 #define LIGHTNUM 2
 
-double omniPLight[3] = {0.0, 1.0, 2.0};
-double omniCLight[3] = {1.0, 1.0, 0.0};
-double directDLight[3] = {1.0, 1.0, 1.0};
+double omniPLight[3] = {3.0, 3.0, 7.0};
+double omniCLight[3] = {1.0, 0.0, 0.0};
+double directDLight[3] = {-1.0, -1.0, 1.0};
 double directCLight[3] = {0.0, 0.0, 0.5};
 double cAmbient[3] = {0.1, 0.1, 0.1};
 
@@ -51,7 +51,8 @@ void *bodies[BODYNUM] = {&cylRed, &cylGreen, &cylBlue, &sphA, &sphB, &plane};
 /* Lighting */
 omniLight omni;
 directLight direct;
-void *lights[LIGHTNUM] = {&omni, &direct};
+void *lights[LIGHTNUM] = {&direct, &omni};
+//void *lights[LIGHTNUM] = {&omni};
 
 /* Rendering ******************************************************************/
 
@@ -109,29 +110,12 @@ void handleKeyCamera(int key) {
 		SCREENHEIGHT);
 	camLookAt(&camera, cameraTarget, cameraRho, cameraPhi, cameraTheta);
 }
-//void handleKeyLight(int key) {
-//	if (key == GLFW_KEY_O)
-//		dLightRaw[1] += 0.1;
-//	else if (key == GLFW_KEY_K)
-//		dLightRaw[0] -= 0.1;
-//	else if (key == GLFW_KEY_L)
-//		dLightRaw[1] -= 0.1;
-//	else if (key == GLFW_KEY_SEMICOLON)
-//		dLightRaw[0] += 0.1;
-//	else if (key == GLFW_KEY_P)
-//		dLightRaw[2] += 0.1;
-//	else if (key == GLFW_KEY_SLASH)
-//		dLightRaw[2] -= 0.1;
-//}
+
 void handleKeyAny(int key, int shiftIsDown, int controlIsDown,
 		int altOptionIsDown, int superCommandIsDown) {
 	if (key == GLFW_KEY_W || key == GLFW_KEY_A || key == GLFW_KEY_S ||
 			key == GLFW_KEY_D || key == GLFW_KEY_E || key == GLFW_KEY_Q)
 		handleKeyCamera(key);
-//	else if (key == GLFW_KEY_O || key == GLFW_KEY_K || key == GLFW_KEY_L ||
-//			key == GLFW_KEY_SEMICOLON || key == GLFW_KEY_P ||
-//			key == GLFW_KEY_SLASH)
-//		handleKeyLight(key);
 }
 void handleKeyDown(int key, int shiftIsDown, int controlIsDown,
 		int altOptionIsDown, int superCommandIsDown) {

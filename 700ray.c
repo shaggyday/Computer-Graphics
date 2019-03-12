@@ -60,13 +60,17 @@ rayResponse rayIntersection(int bodyNum, const void *bodies[], rayQuery *query,
 }
 
 /* Helper function for shadow calculations */
-int shadowTest(lightResponse lightResponse1, double x[3], int bodyNum, const void *bodies[]){
+int shadowTest(lightResponse lightResponse1,  double x[3], int bodyNum, const void *bodies[]){
 	rayQuery shadowQuery;
 	rayResponse shadowResponse;
 	vecCopy(3, x, shadowQuery.e);
 	vecCopy(3, lightResponse1.dLight, shadowQuery.d);
 	shadowQuery.tStart = rayEPSILON;
 	shadowQuery.tEnd = lightResponse1.distance;
+	if (shadowQuery.tEnd != rayINFINITY){
+	    double dLength = vecLength(3, shadowQuery.d);
+	    shadowQuery.tEnd = shadowQuery.tEnd / dLength;
+	}
 	int index;
 	shadowResponse = rayIntersection(bodyNum, bodies, &shadowQuery, &index);
 	return index;
