@@ -2,7 +2,7 @@
 
 
 /* On macOS, compile with...
-    clang 710mainMirrors.c 000pixel.o -lglfw -framework OpenGL
+    clang 720mainTransmission.c 000pixel.o -lglfw -framework OpenGL
 */
 
 #include <stdio.h>
@@ -25,7 +25,10 @@
 #define SCREENHEIGHT 512
 #define BODYNUM 6
 #define LIGHTNUM 2
-#define RECURSIONNUM 2
+#define RECURSIONNUM 1
+
+#define AIRINDEX 1.0
+#define SPHEREINDEX 1.5
 
 double omniPLight[3] = {3.0, 3.0, 15.0};
 double omniCLight[3] = {0.0, 0.5, 0.0};

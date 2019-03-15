@@ -11,6 +11,6 @@ find_package(OpenGL REQUIRED)
 
 include_directories(. ${GLFW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 
-add_executable(day_7 700mainShadow.c)
+add_executable(day_7 720mainTransmission.c)
 
 target_link_libraries(day_7 ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} m)
