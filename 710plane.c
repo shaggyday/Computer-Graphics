@@ -53,7 +53,7 @@ void planeColor(const void *body, rayQuery *query,
 	vecAdd(3, query->e, tTimesD, x);
 	isoUntransformPoint(&(plane->isometry), x, xLocal);
 	/* Sample texture to get diffuse surface color. */
-	double texCoords[2] = {xLocal[0] / 5,xLocal[1] / 5};
+	double texCoords[2] = {xLocal[0],xLocal[1]};
 	vecScale(3, 0.5, texCoords, texCoords);
 	/* Do lighting calculations in global coordinates */
 	double cDiff[plane->texture->texelDim];
@@ -62,36 +62,46 @@ void planeColor(const void *body, rayQuery *query,
     lightClass **class;
     lightResponse lightResponse1;
 	double cSpec[3] = {0.5, 0.5, 0.5}, shininess = 16.0;
+	double temp[3];
+	double dNormalLocal[3] = {0.0, 0.0, -response->intersected};
     for (int i = 0; i < lightNum; i +=1){
         class = (lightClass **)(lights[i]);
         lightResponse1 = (*class)->lighting(lights[i], x);
         int index = shadowTest(lightResponse1, x, bodyNum, bodies);
         if (index < 0) {
 			/* Do lighting calculations in local coordinates. */
-            double dNormalLocal[3] = {0.0, 0.0, -response->intersected}, dLightLocal[3], dCameraLocal[3];
+            double dLightLocal[3], dCameraLocal[3];
             isoUnrotateVector(&(plane->isometry), lightResponse1.dLight, dLightLocal);
             vecUnit(3, dLightLocal, dLightLocal);
             double dCamera[3];
             vecScale(3, -1.0, query->d, dCamera);
 			isoUnrotateVector(&(plane->isometry), dCamera, dCameraLocal);
             vecUnit(3, dCameraLocal, dCameraLocal);
-            double temp[3];
             rayDiffuseAndSpecular(dNormalLocal, dLightLocal, dCameraLocal, cDiff,
                     lightResponse1.cLight, cSpec, shininess, temp);
             vecAdd(3, temp, rgb, rgb);
         }
 	}
 	/* Add mirror contribution */
-	double cMirr[3];
-	if (recursionNum == 0)
-		vec3Set(0.0, 0.0, 0.0, cMirr);
-	else if (recursionNum > 0){
-		rayResponse mirrorRay =	rayColor(bodyNum, bodies, lightNum, lights, cAmbient, query, recursionNum - 1, cMirr);
+	double cMirr[3] = {0.0, 0.0, 0.0};
+	if (recursionNum > 0){
+		recursionNum--;
+		rayQuery mirrorQuery;
+		vecCopy(3, x, mirrorQuery.e);
+		double dNormal[3];
+		isoRotateVector(&(plane->isometry), dNormalLocal, dNormal);
+		reflection(query->d, dNormal, mirrorQuery.d);
+        vecScale(3, -1, mirrorQuery.d, mirrorQuery.d);
+		mirrorQuery.tStart = rayEPSILON;
+		mirrorQuery.tEnd = rayINFINITY;
+		rayResponse mirrorRay =	rayColor(bodyNum, bodies, lightNum, lights, cAmbient, &mirrorQuery, recursionNum, cMirr);
+        vecMultiply(3, cMirr, cSpec, temp);
+        vecAdd(3, temp, rgb, rgb);
 	}
 	/* Ambient light. */
-	rgb[0] += cMirr[0] * cSpec[0] + cDiff[0] * cAmbient[0];
-	rgb[1] += cMirr[1] * cSpec[1] + cDiff[1] * cAmbient[1];
-	rgb[2] += cMirr[2] * cSpec[2] + cDiff[2] * cAmbient[2];
+	rgb[0] += cDiff[0] * cAmbient[0];
+	rgb[1] += cDiff[1] * cAmbient[1];
+	rgb[2] += cDiff[2] * cAmbient[2];
 }
 
 rayClass planeClass = {planeIntersection, planeColor};

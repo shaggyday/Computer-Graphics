@@ -62,8 +62,8 @@ rayResponse rayIntersection(int bodyNum, const void *bodies[], rayQuery *query,
 /* Outputs the RGB color of the specified ray. If the ray hits nothing in the 
 scene, then outputs some fixed background color. Also returns the response to 
 the given query. */
-rayResponse rayColor(int bodyNum, const void *bodies[], int lightNum, 
-		const void *lights[], const double cAmbient[3], rayQuery *query, 
+rayResponse rayColor(int bodyNum, const void *bodies[], int lightNum,
+		const void *lights[], const double cAmbient[3], rayQuery *query,
 		int recursionNum, double rgb[3]){
 	int index;
 	rayResponse response = rayIntersection(bodyNum, bodies, query, &index);

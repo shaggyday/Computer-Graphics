@@ -54,6 +54,7 @@ void sphColor(const void *body,rayQuery *query,
               const rayResponse *response, int bodyNum, const void *bodies[],
               int lightNum, const void *lights[], const double cAmbient[3],
               int recursionNum, double rgb[3]) {
+    vec3Set(0.0, 0.0, 0.0, rgb);
     const sphereSphere *sph = (const sphereSphere *) body;
     /* x = e + t d. */
     double tTimesD[3], x[3], xLocal[3];
@@ -101,29 +102,27 @@ void sphColor(const void *body,rayQuery *query,
         vecScale(3, -1, mirrorQuery.d, mirrorQuery.d);
         mirrorQuery.tStart = rayEPSILON;
         mirrorQuery.tEnd = rayINFINITY;
-		rayResponse mirrorRay =	rayColor(bodyNum, bodies, lightNum, lights, cAmbient, &mirrorQuery, recursionNum - 1, cMirr);
+        rayResponse mirrorRay =	rayColor(bodyNum, bodies, lightNum, lights, cAmbient, &mirrorQuery, recursionNum - 1, cMirr);
         vecMultiply(3, cMirr, cSpec, Mirror);
         vecAdd(3, Mirror, rgb, rgb);
-	/* Transmission contributions
-	   I can't debug this part :( The returned transmission colors are way over {1.0, 1.0, 1.0} so everything is white. */
-        double dInc[3], cTransed[3], cTran[3] = {0.5, 0.5, 0.5}, tranMission[3];
+        /* Transmission contributions
+           I can't debug this part :( The returned transmission colors are way over {1.0, 1.0, 1.0} so everything is white. */
+        double dInc[3], cTransed[3], cTran[3] = {1.0, 1.0, 1.0}, transMission[3];
         rayQuery tranQuery;
         vecCopy(3, x, tranQuery.e);
         vecScale(3, -1, query->d, dInc);
         vecUnit(3, dInc, dInc);
+        tranQuery.tStart = rayEPSILON;
+        tranQuery.tEnd = rayINFINITY;
         if (vecUnit(3, dInc, dNormal) >= 0)
             rayRefraction(dNormal, AIRINDEX, dInc, SPHEREINDEX, tranQuery.d);
         else
             rayRefraction(dNormal, SPHEREINDEX, dInc, AIRINDEX, tranQuery.d);
-        vecUnit(3, tranQuery.d, tranQuery.d);
-        tranQuery.tStart = rayEPSILON;
-        tranQuery.tEnd = rayINFINITY;
         rayResponse tranRay = rayColor(bodyNum, bodies, lightNum, lights, cAmbient, &tranQuery, recursionNum - 1, cTransed);
-        vecMultiply(3, cTransed, cTran, tranMission);
-//        vecPrint(3, cTransed);
-        vecAdd(3, tranMission, rgb, rgb);
+        vecMultiply(3, cTransed, cTran, transMission);
+        vecAdd(3, transMission, rgb, rgb);
     }
-	/* Ambient light. */
+    /* Ambient light. */
     double ambient[3];
     vecMultiply(3, cDiff, cAmbient, ambient);
     vecAdd(3, ambient, rgb, rgb);

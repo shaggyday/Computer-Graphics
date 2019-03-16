@@ -60,14 +60,15 @@ void vecSubtract(int dim, const double v[], const double w[],
 }
 
 /* Scales the dim-dimensional vector w by the number c. The output can safely
-alias the input.*/
+alias the input. */
 void vecScale(int dim, double c, const double w[], double cTimesW[]) {
 	for(int i = 0;i < dim;i += 1){
 		cTimesW[i] = w[i]*c;
 	}
 }
 
-/* Returns the dot product of the vectors v and w. */
+/* Returns the dot product of the vectors v and w. The output can safely
+alias the input. */
 double vecDot(int dim, const double v[], const double w[]){
 	double dot = 0.0;
 	for(int i = 0;i < dim;i += 1)
@@ -75,7 +76,8 @@ double vecDot(int dim, const double v[], const double w[]){
 	return dot;
 }
 
-/* Returns the "multiply product" of the vectors v and w. */
+/* Returns the "multiply product" of the vectors v and w. The output can safely
+alias the input. */
 void vecMultiply(int dim, const double v[], const double w[], double vTimesw[]){
 	for(int i = 0; i < dim; i += 1){
 		vTimesw[i] = v[i]*w[i];
