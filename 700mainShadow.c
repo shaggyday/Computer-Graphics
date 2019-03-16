@@ -16,7 +16,7 @@
 #include "610isometry.c"
 #include "600camera.c"
 #include "680light.c"
-#include "700ray.c"
+#include "710ray.c"
 
 #include "680omnidirectional.c"
 #include "690directional.c"
@@ -26,8 +26,8 @@
 #define BODYNUM 6
 #define LIGHTNUM 2
 
-double omniPLight[3] = {3.0, 3.0, 7.0};
-double omniCLight[3] = {1.0, 0.0, 0.0};
+double omniPLight[3] = {1.0, 0.0, 2.0};
+double omniCLight[3] = {1.0, 1.0, 0.0};
 double directDLight[3] = {-1.0, -1.0, 1.0};
 double directCLight[3] = {0.0, 0.0, 0.5};
 double cAmbient[3] = {0.1, 0.1, 0.1};
@@ -51,8 +51,7 @@ void *bodies[BODYNUM] = {&cylRed, &cylGreen, &cylBlue, &sphA, &sphB, &plane};
 /* Lighting */
 omniLight omni;
 directLight direct;
-void *lights[LIGHTNUM] = {&direct, &omni};
-//void *lights[LIGHTNUM] = {&omni};
+void *lights[LIGHTNUM] = {&omni, &direct};
 
 /* Rendering ******************************************************************/
 

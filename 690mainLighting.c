@@ -15,7 +15,7 @@
 #include "040texture.c"
 #include "610isometry.c"
 #include "600camera.c"
-#include "700ray.c"
+#include "710ray.c"
 #include "680light.c"
 
 #include "680omnidirectional.c"
